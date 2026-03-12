@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🤖 MISSÃO IA — Conceitos Iniciais de IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+:root{
+  --bg:#030712;
+  --s1:#0a0f1e;
+  --s2:#0f172a;
+  --s3:#1e293b;
+  --cyan:#00f5ff;
+  --cyan2:#00c4cc;
+  --green:#39ff14;
+  --yellow:#ffe600;
+  --red:#ff2d55;
+  --purple:#a855f7;
+  --text:#e2e8f0;
+  --text2:#94a3b8;
+  --text3:#475569;
+  --border:rgba(0,245,255,0.12);
+  --border2:rgba(0,245,255,0.25);
+  --glow:0 0 20px rgba(0,245,255,0.3);
+  --glow2:0 0 40px rgba(0,245,255,0.2);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;cursor:default}
+
+/* ── SCANLINES ── */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,245,255,0.012) 2px,rgba(0,245,255,0.012) 4px);pointer-events:none;z-index:9999}
+
+/* ── GRID BG ── */
+.grid-bg{position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(0,245,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.04) 1px,transparent 1px);
+  background-size:60px 60px}
+
+/* ── SCREEN SYSTEM ── */
+.screen{display:none;min-height:100vh;position:relative;z-index:1}
+.screen.active{display:flex;flex-direction:column;align-items:center}
+
+/* ── TYPOGRAPHY ── */
+h1,h2,h3,.mono{font-family:'Orbitron',monospace}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.8rem;border-radius:8px;font-family:'Exo 2',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;text-decoration:none;letter-spacing:.5px}
+.btn-cyan{background:transparent;border:1.5px solid var(--cyan);color:var(--cyan);box-shadow:0 0 15px rgba(0,245,255,0.2)}
+.btn-cyan:hover{background:rgba(0,245,255,0.08);box-shadow:var(--glow);transform:translateY(-2px)}
+.btn-solid{background:var(--cyan);color:#000;font-weight:700}
+.btn-solid:hover{background:var(--cyan2);transform:translateY(-2px);box-shadow:var(--glow)}
+.btn-red{background:transparent;border:1.5px solid var(--red);color:var(--red)}
+.btn-red:hover{background:rgba(255,45,85,0.08)}
+.btn-sm{padding:.4rem 1rem;font-size:.8rem}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+
+/* ── CARD ── */
+.card{background:var(--s2);border:1px solid var(--border);border-radius:16px;padding:1.5rem}
+.card-glow{box-shadow:var(--glow2)}
+
+/* ══════════════════════════════════════════
+   SCREEN: INTRO
+══════════════════════════════════════════ */
+#s-intro{justify-content:center;padding:2rem 1rem;min-height:100vh}
+.intro-wrap{max-width:700px;width:100%;text-align:center}
+.ai-logo{font-size:5rem;margin-bottom:1.5rem;animation:pulse-ai 2s ease-in-out infinite;display:block}
+@keyframes pulse-ai{0%,100%{filter:drop-shadow(0 0 20px rgba(0,245,255,0.6))}50%{filter:drop-shadow(0 0 40px rgba(0,245,255,1))}}
+.intro-tag{display:inline-block;background:rgba(0,245,255,0.08);border:1px solid var(--border2);color:var(--cyan);font-size:.75rem;font-weight:700;padding:.35rem 1rem;border-radius:100px;letter-spacing:2px;text-transform:uppercase;margin-bottom:1.5rem}
+.intro-title{font-size:clamp(2.2rem,6vw,4rem);font-weight:900;line-height:1.1;margin-bottom:.5rem;letter-spacing:-1px}
+.intro-title span{color:var(--cyan);text-shadow:0 0 30px rgba(0,245,255,0.6)}
+.intro-sub{font-size:1rem;color:var(--text2);line-height:1.7;margin-bottom:2.5rem}
+.mission-preview{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin:2rem 0;max-width:500px;margin-left:auto;margin-right:auto}
+.mp-item{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:.6rem .4rem;font-size:.7rem;color:var(--text3);text-align:center}
+.mp-item .mp-n{font-family:'Orbitron',monospace;font-size:.85rem;color:var(--cyan);font-weight:700}
+
+/* ══════════════════════════════════════════
+   SCREEN: LOGIN (seleção de aluno)
+══════════════════════════════════════════ */
+#s-login{justify-content:flex-start;padding:5rem 1rem 2rem;gap:2rem}
+.login-header{text-align:center}
+.login-header h2{font-size:1.8rem;font-weight:900;letter-spacing:-1px}
+.login-header p{color:var(--text2);margin-top:.4rem}
+.students-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.75rem;max-width:900px;width:100%}
+.student-btn{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:.85rem 1.1rem;cursor:pointer;transition:all .2s;text-align:left;display:flex;align-items:center;gap:.75rem;font-family:'Exo 2',sans-serif}
+.student-btn:hover{border-color:var(--cyan);background:rgba(0,245,255,0.04);transform:translateX(4px)}
+.student-btn .sb-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,rgba(0,245,255,0.2),rgba(168,85,247,0.2));border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.student-btn .sb-name{font-size:.9rem;font-weight:600;line-height:1.3}
+.student-btn .sb-id{font-size:.7rem;color:var(--text3)}
+.student-btn.done{border-color:var(--green);opacity:.7}
+.student-btn.done .sb-av{background:rgba(57,255,20,0.15)}
+
+/* ══════════════════════════════════════════
+   NAV BAR
+══════════════════════════════════════════ */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;background:rgba(3,7,18,0.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.tb-logo{font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--cyan);letter-spacing:1px}
+.tb-logo span{color:var(--text2);font-weight:400}
+.tb-right{display:flex;align-items:center;gap:.75rem}
+.tb-player{font-size:.8rem;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.live-dot{display:inline-flex;align-items:center;gap:.3rem;font-size:.7rem;font-weight:700;color:var(--red);letter-spacing:1px;text-transform:uppercase}
+.live-dot::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--red);animation:blink .8s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.sound-toggle{width:32px;height:32px;background:var(--s2);border:1px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:all .2s}
+.sound-toggle:hover{border-color:var(--cyan)}
+
+/* ══════════════════════════════════════════
+   SCREEN: GAME
+══════════════════════════════════════════ */
+#s-game{padding:5rem 1rem 2rem;gap:1.25rem;max-width:860px;margin:0 auto;width:100%}
+
+/* Progress bar */
+.prog-row{width:100%;display:flex;align-items:center;gap:1rem}
+.prog-track{flex:1;height:8px;background:var(--s3);border-radius:100px;overflow:hidden;border:1px solid var(--border)}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:100px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.prog-label{font-size:.75rem;color:var(--cyan);font-family:'Orbitron',monospace;white-space:nowrap}
+
+/* HUD */
+.hud{width:100%;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem}
+.hud-stat{display:flex;flex-direction:column;align-items:center;gap:2px}
+.hud-stat .hs-l{font-size:.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
+.hud-stat .hs-v{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700}
+.hud-stat .hs-v.cyan{color:var(--cyan)}
+.hud-stat .hs-v.yellow{color:var(--yellow)}
+.hud-stat .hs-v.red-c{color:var(--red)}
+
+/* Timer */
+.timer-wrap{position:relative;width:54px;height:54px}
+.timer-svg{transform:rotate(-90deg)}
+.t-track{fill:none;stroke:var(--s3);stroke-width:4}
+.t-fill{fill:none;stroke:var(--cyan);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 1s linear,stroke .5s}
+.t-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.95rem;font-weight:700}
+
+/* Mission card */
+.mission-card{width:100%;background:var(--s1);border:1px solid var(--border2);border-radius:20px;padding:1.75rem;position:relative;overflow:hidden}
+.mission-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--purple),var(--cyan));animation:scan 3s linear infinite}
+@keyframes scan{0%{background-position:0% 0}100%{background-position:200% 0}}
+.mission-tag{display:flex;align-items:center;gap:.6rem;margin-bottom:.9rem}
+.m-num{font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;color:var(--cyan);background:rgba(0,245,255,0.08);border:1px solid var(--border2);padding:.2rem .7rem;border-radius:100px;letter-spacing:1px}
+.m-diff{font-size:.7rem;padding:.2rem .6rem;border-radius:100px;font-weight:600}
+.diff-easy{background:rgba(57,255,20,0.12);color:var(--green)}
+.diff-med{background:rgba(255,230,0,0.12);color:var(--yellow)}
+.diff-hard{background:rgba(255,45,85,0.12);color:var(--red)}
+.mission-q{font-size:1.2rem;font-weight:600;line-height:1.55;color:var(--text)}
+.mission-context{margin-top:.75rem;padding:.75rem 1rem;background:rgba(0,245,255,0.04);border-left:2px solid var(--cyan);border-radius:0 8px 8px 0;font-size:.85rem;color:var(--text2);line-height:1.6}
+
+/* Answers */
+.answers-wrap{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+@media(max-width:560px){.answers-wrap{grid-template-columns:1fr}}
+.ans-btn{background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:.9rem 1.1rem;text-align:left;cursor:pointer;transition:all .2s;display:flex;align-items:flex-start;gap:.75rem;font-family:'Exo 2',sans-serif;font-size:.9rem;color:var(--text);line-height:1.4}
+.ans-btn .al{min-width:30px;height:30px;border-radius:7px;background:var(--s3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;color:var(--text2);transition:all .2s;flex-shrink:0}
+.ans-btn:hover:not(:disabled){border-color:var(--cyan);background:rgba(0,245,255,0.05)}
+.ans-btn:hover:not(:disabled) .al{background:rgba(0,245,255,0.15);border-color:var(--cyan);color:var(--cyan)}
+.ans-btn.correct{border-color:var(--green);background:rgba(57,255,20,0.07)}
+.ans-btn.correct .al{background:rgba(57,255,20,0.2);border-color:var(--green);color:var(--green)}
+.ans-btn.wrong{border-color:var(--red);background:rgba(255,45,85,0.07)}
+.ans-btn.wrong .al{background:rgba(255,45,85,0.2);border-color:var(--red);color:var(--red)}
+.ans-btn.selected{border-color:var(--yellow)}
+.ans-btn.selected .al{background:rgba(255,230,0,0.2);border-color:var(--yellow);color:var(--yellow)}
+.ans-btn:disabled{cursor:not-allowed}
+
+/* Open answer */
+.open-wrap{width:100%}
+.open-wrap textarea{width:100%;min-height:110px;background:var(--s2);border:1px solid var(--border);border-radius:14px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:.95rem;padding:1rem;resize:vertical;outline:none;transition:border-color .2s;line-height:1.6}
+.open-wrap textarea:focus{border-color:var(--cyan)}
+.ai-eval-box{margin-top:1rem;padding:1rem 1.25rem;background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.25);border-radius:14px;font-size:.88rem;line-height:1.6}
+.ai-eval-label{font-family:'Orbitron',monospace;font-size:.65rem;color:var(--purple);letter-spacing:2px;text-transform:uppercase;margin-bottom:.6rem;display:flex;align-items:center;gap:.5rem}
+.score-badge{display:inline-block;padding:2px 10px;border-radius:100px;font-weight:700;font-size:.78rem;font-family:'Orbitron',monospace}
+.sb-hi{background:rgba(57,255,20,0.15);color:var(--green)}
+.sb-mid{background:rgba(255,230,0,0.15);color:var(--yellow)}
+.sb-lo{background:rgba(255,45,85,0.15);color:var(--red)}
+
+/* Feedback overlay */
+.feedback-overlay{width:100%;padding:1.25rem;border-radius:14px;text-align:center;font-size:1rem;font-weight:600;animation:fade-in .3s}
+.fo-correct{background:rgba(57,255,20,0.1);border:1px solid var(--green);color:var(--green)}
+.fo-wrong{background:rgba(255,45,85,0.1);border:1px solid var(--red);color:var(--red)}
+@keyframes fade-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* COMBO */
+.combo-toast{position:fixed;top:70px;right:1rem;z-index:300;background:linear-gradient(135deg,var(--yellow),#ff9500);color:#000;border-radius:12px;padding:.6rem 1.2rem;font-family:'Orbitron',monospace;font-weight:900;font-size:1rem;transform:translateX(200%);transition:transform .4s cubic-bezier(.175,.885,.32,1.275);box-shadow:0 4px 20px rgba(255,230,0,.4)}
+.combo-toast.show{transform:translateX(0)}
+
+/* SPARKLES */
+.sparkles{position:fixed;inset:0;pointer-events:none;z-index:400}
+.sp{position:absolute;width:8px;height:8px;border-radius:50%;animation:sp-fly .7s ease-out forwards}
+@keyframes sp-fly{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
+
+/* ══════════════════════════════════════════
+   SCREEN: RESULTS
+══════════════════════════════════════════ */
+#s-results{justify-content:center;padding:5rem 1rem 3rem;gap:1.5rem}
+.result-wrap{max-width:560px;width:100%;text-align:center}
+.result-icon{font-size:5rem;display:block;animation:trophy-pop .6s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes trophy-pop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+.result-grade{font-family:'Orbitron',monospace;font-size:5rem;font-weight:900;line-height:1;margin:.5rem 0;text-shadow:0 0 40px currentColor}
+.gr-a{color:var(--cyan)}
+.gr-b{color:var(--green)}
+.gr-c{color:var(--yellow)}
+.gr-d{color:var(--red)}
+.result-msg{font-size:1rem;color:var(--text2);margin-bottom:1.5rem}
+.res-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
+.rs-item{background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:1rem;text-align:center}
+.rs-val{font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900}
+.rs-lbl{font-size:.72rem;color:var(--text3);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+
+/* ══════════════════════════════════════════
+   SCREEN: RANKING
+══════════════════════════════════════════ */
+#s-rank{padding:5rem 1rem 3rem;gap:1.5rem;max-width:740px;margin:0 auto;width:100%}
+.rank-title{text-align:center;width:100%}
+.rank-title h2{font-size:1.8rem;font-weight:900;letter-spacing:-1px}
+.rank-title p{font-size:.85rem;color:var(--text2);margin-top:.3rem}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:.75rem;margin:1rem 0;width:100%}
+.pod-item{display:flex;flex-direction:column;align-items:center;gap:.4rem}
+.pod-av{font-size:1.6rem}
+.pod-name{font-size:.75rem;font-weight:600;text-align:center;max-width:80px}
+.pod-score{font-family:'Orbitron',monospace;font-size:.8rem;color:var(--cyan)}
+.pod-bar{width:72px;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-weight:900;font-size:1.1rem}
+.pb1{height:100px;background:linear-gradient(180deg,#FFD700,#cc8800);color:#000}
+.pb2{height:72px;background:linear-gradient(180deg,#a0a0a0,#606060);color:#fff}
+.pb3{height:52px;background:linear-gradient(180deg,#cd7f32,#7a4510);color:#fff}
+.rank-list{width:100%;display:flex;flex-direction:column;gap:.4rem}
+.rank-row{display:flex;align-items:center;gap:.9rem;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:.65rem 1rem;transition:border-color .2s}
+.rank-row:hover{border-color:var(--border2)}
+.rank-row.me{border-color:var(--yellow);background:rgba(255,230,0,.03)}
+.rr-pos{font-family:'Orbitron',monospace;font-weight:700;font-size:.9rem;min-width:26px;text-align:center}
+.rr-av{font-size:1.1rem}
+.rr-name{flex:1;font-size:.88rem;font-weight:600}
+.rr-score{font-family:'Orbitron',monospace;font-weight:700;color:var(--cyan);font-size:.9rem}
+.rr-correct{font-size:.75rem;color:var(--text3)}
+.live-badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.68rem;font-weight:700;color:var(--red);border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.07);padding:2px 8px;border-radius:100px;letter-spacing:1px}
+.live-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--red);animation:blink .8s infinite}
+
+/* ══════════════════════════════════════════
+   SCREEN: PROFESSOR DASHBOARD
+══════════════════════════════════════════ */
+#s-prof{padding:5rem 1rem 3rem;gap:1.5rem;max-width:1100px;margin:0 auto;width:100%}
+.prof-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;width:100%}
+.prof-title h2{font-size:1.8rem;font-weight:900;letter-spacing:-1px}
+.prof-title p{color:var(--text2);font-size:.88rem;margin-top:.3rem}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.9rem;width:100%}
+.stat-box{background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:1.1rem}
+.stat-box .sbi{font-size:1.4rem;margin-bottom:.65rem}
+.stat-box .sbv{font-family:'Orbitron',monospace;font-size:1.9rem;font-weight:900}
+.stat-box .sbl{font-size:.75rem;color:var(--text2);margin-top:2px}
+.stat-box .sbd{font-size:.72rem;margin-top:4px}
+.sbd.up{color:var(--green)} .sbd.down{color:var(--red)} .sbd.neutral{color:var(--text3)}
+.section-label{font-family:'Orbitron',monospace;font-size:.7rem;letter-spacing:2px;color:var(--text3);text-transform:uppercase;width:100%;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+/* Student cards grid */
+.students-grid-prof{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.75rem;width:100%}
+.stud-card{background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:1rem;transition:border-color .2s}
+.stud-card:hover{border-color:var(--border2)}
+.stud-top{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+.stud-av{width:38px;height:38px;border-radius:50%;background:var(--s3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.stud-info .sn{font-size:.88rem;font-weight:600;line-height:1.2}
+.stud-info .ss{font-size:.72rem;color:var(--text3)}
+.stud-bar-wrap{height:5px;background:var(--s3);border-radius:100px;overflow:hidden;margin-bottom:.5rem}
+.stud-bar-fill{height:100%;border-radius:100px;transition:width 1s ease}
+.sf-hi{background:linear-gradient(90deg,var(--cyan),var(--green))}
+.sf-mid{background:linear-gradient(90deg,var(--yellow),#ff9500)}
+.sf-lo{background:linear-gradient(90deg,var(--red),#ff6b6b)}
+.stud-bottom{display:flex;justify-content:space-between;font-size:.75rem;color:var(--text3)}
+.stud-bottom span:first-child{color:var(--cyan);font-family:'Orbitron',monospace;font-weight:700}
+/* AI Evals table */
+.ai-table-wrap{overflow:auto;width:100%;background:var(--s2);border:1px solid var(--border);border-radius:16px}
+.ai-table{width:100%;border-collapse:collapse;min-width:700px}
+.ai-table th{padding:.6rem 1rem;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--text3);border-bottom:1px solid var(--border)}
+.ai-table td{padding:.75rem 1rem;font-size:.82rem;border-top:1px solid var(--border);vertical-align:top;line-height:1.5}
+.ai-table tr:hover td{background:rgba(0,245,255,0.02)}
+/* Mission analysis */
+.mission-bars{display:flex;flex-direction:column;gap:.9rem;width:100%}
+.mb-row{display:flex;flex-direction:column;gap:5px}
+.mb-label{display:flex;justify-content:space-between;font-size:.82rem}
+.mb-bar{height:7px;background:var(--s3);border-radius:100px;overflow:hidden}
+.mb-fill{height:100%;border-radius:100px;transition:width 1s ease}
+/* Tabs */
+.tabs{display:flex;gap:.4rem;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:4px;width:fit-content}
+.tab-btn{padding:.35rem .9rem;border-radius:7px;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s;border:none;background:transparent;color:var(--text3);font-family:'Exo 2',sans-serif}
+.tab-btn.active{background:var(--s3);color:var(--cyan);box-shadow:0 0 10px rgba(0,245,255,.1)}
+
+/* ── AI AVATAR ── */
+.ai-avatar{position:fixed;bottom:1.25rem;left:1.25rem;z-index:150;cursor:pointer}
+.ai-av-inner{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,rgba(0,245,255,.2),rgba(168,85,247,.2));border:1.5px solid var(--cyan);display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 0 20px rgba(0,245,255,.3);animation:av-idle 2.5s ease-in-out infinite}
+@keyframes av-idle{0%,100%{transform:scale(1);box-shadow:0 0 20px rgba(0,245,255,.3)}50%{transform:scale(1.06);box-shadow:0 0 30px rgba(0,245,255,.5)}}
+.ai-bubble{position:absolute;bottom:60px;left:0;width:210px;background:var(--s2);border:1px solid var(--border2);border-radius:14px 14px 14px 4px;padding:.75rem .9rem;font-size:.78rem;line-height:1.5;color:var(--text2);opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none}
+.ai-avatar:hover .ai-bubble{opacity:1;transform:translateY(0)}
+
+/* LIVE TOAST */
+.live-toast{position:fixed;bottom:1rem;right:1rem;z-index:300;background:var(--s2);border:1px solid var(--border2);border-radius:10px;padding:.55rem 1rem;font-size:.8rem;color:var(--text2);transform:translateY(80px);transition:transform .3s;max-width:240px}
+.live-toast.show{transform:translateY(0)}
+
+/* SPINNER */
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{100%{transform:rotate(360deg)}}
+
+/* MISC */
+.hidden{display:none!important}
+.flex-center{display:flex;align-items:center;justify-content:center}
+.gap-sm{gap:.5rem}
+.mt1{margin-top:.5rem}
+.mt2{margin-top:1rem}
+.text-cyan{color:var(--cyan)}
+.text-green{color:var(--green)}
+.text-yellow{color:var(--yellow)}
+.text-red{color:var(--red)}
+.text-purple{color:var(--purple)}
+.text-muted{color:var(--text2)}
+.chip{display:inline-block;padding:2px 9px;border-radius:100px;font-size:.7rem;font-weight:700}
+.chip-cyan{background:rgba(0,245,255,.1);color:var(--cyan)}
+.chip-green{background:rgba(57,255,20,.1);color:var(--green)}
+.chip-yellow{background:rgba(255,230,0,.1);color:var(--yellow)}
+.chip-red{background:rgba(255,45,85,.1);color:var(--red)}
+@media(max-width:500px){.intro-title{font-size:2rem}.hud{gap:.5rem}.hud-stat .hs-v{font-size:.9rem}.mission-q{font-size:1rem}}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="sparkles" id="sparklesEl"></div>
+<div class="combo-toast" id="comboToast"></div>
+<div class="live-toast" id="liveToast"></div>
+
+<!-- AI AVATAR (oculto até estar no jogo) -->
+<div class="ai-avatar hidden" id="aiAvatar">
+  <div class="ai-av-inner">🤖</div>
+  <div class="ai-bubble" id="aiBubble">Pronto para a missão? Analise com calma cada alternativa!</div>
+</div>
+
+<!-- TOP BAR -->
+<nav class="topbar">
+  <div class="tb-logo">MISSÃO<span> IA</span></div>
+  <div class="tb-right">
+    <span class="live-dot hidden" id="liveIndicator">AO VIVO</span>
+    <span class="tb-player" id="tbPlayer"></span>
+    <div class="sound-toggle" id="soundBtn" title="Sons">🔊</div>
+    <button class="btn btn-cyan btn-sm" onclick="goScreen('s-prof')">👨‍🏫 Professor</button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     TELA: INTRO
+══════════════════════════════════════════ -->
+<div class="screen active" id="s-intro">
+  <div class="intro-wrap" style="margin-top:4rem">
+    <span class="ai-logo">🤖</span>
+    <div class="intro-tag">⚡ Plataforma Educacional Gamificada</div>
+    <h1 class="intro-title">MISSÃO <span>IA</span></h1>
+    <p class="intro-sub">Explore o universo da <strong>Inteligência Artificial</strong> em sistemas de<br>recomendação através de 12 missões interativas. Compete com sua turma em tempo real.</p>
+    <div class="mission-preview" id="missionPreview"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:2rem">
+      <button class="btn btn-solid" style="font-size:1rem;padding:.85rem 2.5rem" onclick="goScreen('s-login')">🚀 Iniciar Missões</button>
+      <button class="btn btn-cyan" style="font-size:1rem;padding:.85rem 2rem" onclick="goScreen('s-rank')">🏆 Ver Ranking</button>
+    </div>
+    <p style="font-size:.75rem;color:var(--text3);margin-top:2rem">Tema: IA em Sistemas de Recomendação • 12 missões • Avaliação por IA</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TELA: LOGIN (seleção de aluno)
+══════════════════════════════════════════ -->
+<div class="screen" id="s-login">
+  <div class="login-header" style="margin-top:5rem">
+    <h2>👤 Quem é você?</h2>
+    <p>Selecione seu nome para começar as missões</p>
+  </div>
+  <div class="students-grid" id="studentsGrid"></div>
+  <button class="btn btn-cyan btn-sm" onclick="goScreen('s-intro')" style="margin-top:1rem">← Voltar</button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TELA: JOGO
+══════════════════════════════════════════ -->
+<div class="screen" id="s-game">
+  <!-- Progress -->
+  <div class="prog-row">
+    <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    <span class="prog-label" id="progLabel">0 / 12</span>
+  </div>
+  <!-- HUD -->
+  <div class="hud">
+    <div class="hud-stat"><span class="hs-l">Pontos</span><span class="hs-v cyan" id="scoreVal">0</span></div>
+    <div class="hud-stat"><span class="hs-l">Combo</span><span class="hs-v yellow" id="comboVal">x0</span></div>
+    <div class="hud-stat"><span class="hs-l">Acertos</span><span class="hs-v" id="correctVal" style="color:var(--green)">0/12</span></div>
+    <div class="timer-wrap">
+      <svg class="timer-svg" width="54" height="54" viewBox="0 0 54 54">
+        <circle class="t-track" cx="27" cy="27" r="21"/>
+        <circle class="t-fill" id="timerCircle" cx="27" cy="27" r="21" stroke-dasharray="131.9" stroke-dashoffset="0"/>
+      </svg>
+      <div class="t-num" id="timerNum">30</div>
+    </div>
+  </div>
+  <!-- Mission Card -->
+  <div class="mission-card" id="missionCard">
+    <div class="mission-tag">
+      <span class="m-num" id="mNum">MISSÃO 01</span>
+      <span class="m-diff diff-easy" id="mDiff">FÁCIL</span>
+      <span style="font-size:.75rem;color:var(--text3);margin-left:auto" id="mPts">+100 pts</span>
+    </div>
+    <div class="mission-q" id="mQuestion">Carregando missão...</div>
+    <div class="mission-context hidden" id="mContext"></div>
+  </div>
+  <!-- Answers -->
+  <div class="answers-wrap hidden" id="answersWrap"></div>
+  <!-- Open -->
+  <div class="open-wrap hidden" id="openWrap">
+    <textarea id="openText" placeholder="Digite sua resposta aqui..."></textarea>
+    <div class="ai-eval-box hidden" id="aiEvalBox"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:.75rem">
+      <button class="btn btn-solid" id="submitOpenBtn" onclick="submitOpen()">🤖 Enviar para IA avaliar</button>
+    </div>
+  </div>
+  <!-- Feedback row -->
+  <div id="feedbackRow" class="hidden"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TELA: RESULTADO
+══════════════════════════════════════════ -->
+<div class="screen" id="s-results">
+  <div class="result-wrap">
+    <span class="result-icon" id="resIcon">🏆</span>
+    <div class="result-grade gr-a" id="resGrade">A+</div>
+    <p class="result-msg" id="resMsg">Missão concluída!</p>
+    <div class="res-stats">
+      <div class="rs-item"><div class="rs-val text-cyan" id="resPts">0</div><div class="rs-lbl">Pontos</div></div>
+      <div class="rs-item"><div class="rs-val text-green" id="resAcc">0/12</div><div class="rs-lbl">Acertos</div></div>
+      <div class="rs-item"><div class="rs-val text-purple" id="resRank">#?</div><div class="rs-lbl">Posição</div></div>
+    </div>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center">
+      <button class="btn btn-solid" onclick="goScreen('s-rank')">🏆 Ver Ranking</button>
+      <button class="btn btn-cyan" onclick="goScreen('s-login')">🔄 Jogar novamente</button>
+      <button class="btn btn-cyan" onclick="goScreen('s-prof')">📊 Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TELA: RANKING
+══════════════════════════════════════════ -->
+<div class="screen" id="s-rank">
+  <div class="rank-title">
+    <h2>🏆 RANKING DA TURMA</h2>
+    <p>Atualizado em tempo real via Firebase</p>
+    <div style="display:flex;gap:.75rem;justify-content:center;align-items:center;margin-top:.75rem;flex-wrap:wrap">
+      <div class="live-badge">AO VIVO</div>
+      <button class="btn btn-cyan btn-sm" onclick="goScreen('s-intro')">← Início</button>
+    </div>
+  </div>
+  <div class="podium" id="rankPodium"></div>
+  <div class="rank-list" id="rankList"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TELA: PROFESSOR
+══════════════════════════════════════════ -->
+<div class="screen" id="s-prof">
+  <div class="prof-header">
+    <div class="prof-title">
+      <h2>👨‍🏫 DASHBOARD DO PROFESSOR</h2>
+      <p>Visão completa da turma em tempo real</p>
+    </div>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+      <button class="btn btn-cyan btn-sm" onclick="goScreen('s-intro')">← Início</button>
+      <button class="btn btn-solid btn-sm" onclick="exportData()">⬇ Exportar</button>
+    </div>
+  </div>
+  <!-- Stats -->
+  <div class="stats-grid" id="profStats"></div>
+  <!-- Tabs -->
+  <div style="width:100%;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('alunos',this)">👥 Alunos</button>
+      <button class="tab-btn" onclick="switchTab('respostas',this)">🤖 Avaliações IA</button>
+      <button class="tab-btn" onclick="switchTab('missoes',this)">🎯 Missões</button>
+    </div>
+    <input id="searchProf" placeholder="🔍 Buscar aluno..." style="background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:.4rem .75rem;font-family:'Exo 2',sans-serif;font-size:.82rem;outline:none;width:200px">
+  </div>
+  <div id="tab-alunos" style="width:100%"><div class="students-grid-prof" id="studCardsGrid"></div></div>
+  <div id="tab-respostas" class="hidden" style="width:100%"><div class="ai-table-wrap"><table class="ai-table"><thead><tr><th>Aluno</th><th>Missão</th><th>Resposta</th><th>Nota IA</th><th>Feedback</th></tr></thead><tbody id="aiEvalsBody"></tbody></table></div></div>
+  <div id="tab-missoes" class="hidden" style="width:100%">
+    <div class="section-label" style="margin-bottom:1rem">Taxa de acertos por missão</div>
+    <div class="mission-bars" id="missionBars"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════ -->
+<script>
+// ─────────────────────────────────────────
+// FIREBASE CONFIG
+// ─────────────────────────────────────────
+const fbConfig = {
+  apiKey: "AIzaSyDemoKeyPlaceholder",
+  authDomain: "missao-ia-demo.firebaseapp.com",
+  databaseURL: "https://missao-ia-demo-default-rtdb.firebaseio.com",
+  projectId: "missao-ia-demo"
+};
+
+let db = null;
+let fbOk = false;
+try {
+  firebase.initializeApp(fbConfig);
+  db = firebase.database();
+  fbOk = true;
+} catch(e) { fbOk = false; }
+
+// ─────────────────────────────────────────
+// ALUNOS
+// ─────────────────────────────────────────
+const STUDENTS = [
+  "ALLEC AQUINO RODRIGUES","ANDERSON DE SA ALVES","ANTONY DAVID DOS SANTOS",
+  "BARBARA MARCONDES SALADO","CAMILLY DIAS SILVA","EVELLYN DE SOUZA BASTOS",
+  "EVILLY VITORIA DE MOURA REIS","GABRIEL SANTOS DO NASCIMENTO","GUSTAVO HENRIQUE PEREIRA PARO",
+  "GUSTAVO ROCHA","ISABELLE VIEIRA CARVALHO","LUIZ ANTONIO SOARES GOMES",
+  "MIGUEL GUADO GOMES","NICOLLE RIHANNA LIMA VIEI","RAPIETRO HENRIQUE DOS SANTOS",
+  "RAYSSA DA SILVA NASCIMENTO","SAMUEL DE OLIVEIRA TAVOLASSI","YAGO RIKELME SARAIVA COELHO"
+];
+const AVATARS = ["🦁","🐺","🦊","🐯","🐻","🦅","🐉","🦋","🌟","⚡","🔥","💎","🎯","🧠","🚀","🌊","🎮","🏆"];
+
+// ─────────────────────────────────────────
+// 15 MISSÕES — CONCEITOS INICIAIS DE IA
+// 10 múltipla escolha + 5 dissertativas
+// Baseadas no conteúdo da 1ª aula
+// Respostas corretas: posições 0,1,2,3 variadas
+// ─────────────────────────────────────────
+const MISSIONS = [
+  {
+    id:1, title:"O que é Inteligência Artificial",
+    type:"multi",
+    q:"Qual das alternativas abaixo define corretamente o que é Inteligência Artificial?",
+    ctx:"Lembre-se: IA é sobre sistemas que executam tarefas que normalmente exigiriam inteligência humana.",
+    opts:[
+      "Um robô físico que imita movimentos humanos em fábricas",
+      "Um vírus de computador capaz de se replicar sozinho",
+      "Uma área da computação que cria sistemas capazes de aprender, reconhecer padrões, tomar decisões e resolver problemas",
+      "Um programa que apenas executa cálculos matemáticos pré-definidos"
+    ],
+    ans:2, pts:100, time:25, diff:"easy"
+  },
+  {
+    id:2, title:"IA Fraca vs IA Forte",
+    type:"multi",
+    q:"Sobre a diferença entre IA Fraca e IA Forte, qual afirmação está CORRETA?",
+    ctx:"Pense: qual delas existe hoje? Qual é apenas teórica?",
+    opts:[
+      "A IA Forte já existe e é usada no ChatGPT e no Google",
+      "A IA Fraca é mais poderosa pois resolve qualquer problema humano",
+      "Tanto a IA Fraca quanto a IA Forte já estão plenamente desenvolvidas",
+      "A IA Fraca é projetada para tarefas específicas sem consciência; a IA Forte teria inteligência equivalente à humana, mas ainda não existe"
+    ],
+    ans:3, pts:120, time:30, diff:"easy"
+  },
+  {
+    id:3, title:"Exemplos de IA Fraca",
+    type:"multi",
+    q:"Assistentes virtuais como Siri e Alexa, sistemas de recomendação da Netflix e reconhecimento de imagem são exemplos de qual tipo de IA?",
+    ctx:"Toda IA que existe hoje se encaixa nessa categoria — executa bem, mas apenas tarefas específicas.",
+    opts:[
+      "IA Forte (AGI), pois são muito avançados e versáteis",
+      "IA Fraca (Narrow AI), pois são projetados para tarefas específicas sem ter consciência",
+      "Superinteligência Artificial (ASI), pois superam os humanos",
+      "IA Autoconsciente, pois reconhecem voz e imagem com precisão"
+    ],
+    ans:1, pts:100, time:25, diff:"easy"
+  },
+  {
+    id:4, title:"Máquinas Reativas",
+    type:"multi",
+    q:"O Deep Blue, computador da IBM que venceu o campeão mundial de xadrez Garry Kasparov em 1997, é um exemplo de qual tipo de IA por capacidade?",
+    ctx:"Esse tipo de IA não guarda memória nem aprende — apenas reage ao que vê no tabuleiro.",
+    opts:[
+      "IA com Memória Limitada, pois aprendia com as partidas anteriores",
+      "IA com Teoria da Mente, pois entendia as emoções do adversário",
+      "Máquina Reativa, pois não possui memória e apenas responde aos estímulos do ambiente",
+      "IA Autoconsciente, pois sabia que estava competindo contra um humano"
+    ],
+    ans:2, pts:150, time:30, diff:"medium"
+  },
+  {
+    id:5, title:"IA com Memória Limitada",
+    type:"multi",
+    q:"Carros autônomos, assistentes virtuais e sistemas de recomendação como Netflix e Spotify pertencem a qual tipo de IA por capacidade?",
+    ctx:"Esse tipo aprende com dados recentes e melhora com a experiência — é a maioria das IAs atuais.",
+    opts:[
+      "IA com Memória Limitada, pois usam dados recentes para tomar decisões e melhorar seu funcionamento",
+      "Máquinas Reativas, pois apenas reagem a comandos diretos do usuário",
+      "IA Autoconsciente, pois reconhecem o próprio desempenho e se avaliam",
+      "IA Forte, pois conseguem aprender e executar qualquer tarefa"
+    ],
+    ans:0, pts:150, time:30, diff:"medium"
+  },
+  {
+    id:6, title:"Etapas do Machine Learning",
+    type:"multi",
+    q:"Quais são as etapas básicas do processo de Machine Learning, na ordem correta?",
+    ctx:"O ML segue um ciclo contínuo — cada etapa alimenta a próxima para melhorar os resultados.",
+    opts:[
+      "Programação manual → Teste → Publicação → Manutenção do sistema",
+      "Coleta de dados → Identificação de padrões → Previsões → Ajuste com feedback",
+      "Criação do robô → Treinamento físico → Simulação → Implantação",
+      "Design da interface → Codificação → Debug → Deploy em produção"
+    ],
+    ans:1, pts:200, time:30, diff:"medium"
+  },
+  {
+    id:7, title:"AGI: IA Forte",
+    type:"multi",
+    q:"Qual das alternativas descreve corretamente a AGI (Inteligência Artificial Geral)?",
+    ctx:"AGI ainda não existe — é o grande objetivo de pesquisa da área de IA.",
+    opts:[
+      "Uma IA já existente usada amplamente em smartphones modernos",
+      "Um sistema especializado em reconhecimento de rostos com alta precisão",
+      "Uma IA hipotética com inteligência equivalente à humana, capaz de aprender qualquer tarefa intelectual",
+      "Um algoritmo especializado em diagnóstico médico por imagem radiológica"
+    ],
+    ans:2, pts:150, time:25, diff:"medium"
+  },
+  {
+    id:8, title:"Viés Algorítmico",
+    type:"multi",
+    q:"Uma IA treinada com dados históricos de uma empresa que raramente contratou mulheres passa a rejeitar automaticamente currículos femininos. Isso é um exemplo de:",
+    ctx:"Algoritmos aprendem padrões dos dados — inclusive os preconceituosos e injustos.",
+    opts:[
+      "Machine Learning funcionando perfeitamente conforme esperado",
+      "IA Forte em ação, pois tomou decisão completamente autônoma e consciente",
+      "Simples falha de hardware nos servidores da empresa",
+      "Viés algorítmico: a IA reproduziu e amplificou preconceitos existentes nos dados de treinamento"
+    ],
+    ans:3, pts:200, time:35, diff:"hard"
+  },
+  {
+    id:9, title:"Privacidade e LGPD",
+    type:"multi",
+    q:"A IA frequentemente precisa de grandes volumes de dados pessoais para funcionar. Qual lei brasileira regula a coleta, uso e proteção desses dados?",
+    ctx:"Essa lei foi criada especificamente para proteger os dados pessoais dos cidadãos brasileiros.",
+    opts:[
+      "LGPD — Lei Geral de Proteção de Dados",
+      "CDC — Código de Defesa do Consumidor",
+      "CLT — Consolidação das Leis do Trabalho",
+      "Marco Civil da Internet de 2014"
+    ],
+    ans:0, pts:120, time:25, diff:"easy"
+  },
+  {
+    id:10, title:"ChatGPT: que tipo de IA?",
+    type:"multi",
+    q:"O ChatGPT usa o contexto da conversa para gerar respostas, mas não possui consciência nem entende emoções. A qual tipo de IA por capacidade ele pertence?",
+    ctx:"Ele usa o histórico da conversa (memória de curto prazo), mas não sabe que existe como entidade.",
+    opts:[
+      "Máquina Reativa, pois só responde quando diretamente perguntado pelo usuário",
+      "IA com Teoria da Mente, pois parece compreender intenções e emoções humanas",
+      "IA com Memória Limitada, pois usa contexto recente da conversa mas não possui consciência",
+      "IA Autoconsciente, pois demonstra personalidade e criatividade próprias"
+    ],
+    ans:2, pts:200, time:30, diff:"medium"
+  },
+  {
+    id:11, title:"Explique IA Fraca com exemplos",
+    type:"open",
+    q:"O que é IA Fraca (Narrow AI)? Cite pelo menos 2 características e 2 exemplos do dia a dia. Por que toda IA atual é considerada IA Fraca?",
+    ctx:"Use os conceitos da aula: tarefa específica, sem consciência, sem transferência de conhecimento...",
+    pts:300, time:120, diff:"hard",
+    kw:["fraca","narrow","específica","tarefa","consciência","siri","alexa","netflix","spotify","reconhecimento","recomendação","assistente","não entende","não transfere","atual","limitada","projetada"]
+  },
+  {
+    id:12, title:"4 tipos de IA por capacidade",
+    type:"open",
+    q:"Descreva os 4 tipos de IA classificados por capacidade (Máquinas Reativas, Memória Limitada, Teoria da Mente e Autoconsciente), explicando as características de cada um e indicando quais existem atualmente.",
+    ctx:"Organize sua resposta por tipo. Lembre-se: apenas 2 dos 4 tipos existem de fato hoje!",
+    pts:400, time:150, diff:"hard",
+    kw:["reativa","memória","teoria da mente","autoconsciente","deep blue","carro autônomo","emoção","intenção","consciência","hipotética","desenvolvimento","existe","não existe","aprende","não aprende","estímulo","netflix","spotify"]
+  },
+  {
+    id:13, title:"Como funciona o Machine Learning",
+    type:"open",
+    q:"Explique com suas palavras como funciona o Machine Learning. Quais são suas etapas? Como ele se relaciona com a Inteligência Artificial e com o Deep Learning?",
+    ctx:"ML é um subcampo da IA — tente explicar a relação entre os três e o ciclo de aprendizado contínuo.",
+    pts:350, time:120, diff:"hard",
+    kw:["dados","padrão","previsão","feedback","ajuste","treinamento","aprende","subcampo","ia","algoritmo","melhora","repete","contínuo","identificação","coleta","experiência","deep learning","redes neurais"]
+  },
+  {
+    id:14, title:"Limitações da IA atual",
+    type:"open",
+    q:"Quais são as principais limitações da Inteligência Artificial atual? Escolha pelo menos 3 e explique por que cada uma representa um desafio real para o desenvolvimento da tecnologia.",
+    ctx:"Pense nas limitações vistas na aula: necessidade de muitos dados, viés, compreensão real, memória...",
+    pts:350, time:120, diff:"hard",
+    kw:["dados","viés","não entende","memória limitada","reproduz","preconceito","precisa de muitos dados","não compreende","limitação","desafio","problema","tendencioso","erro","caixa preta","não transfere","tarefa específica"]
+  },
+  {
+    id:15, title:"IA transforma a sociedade?",
+    type:"open",
+    q:"Com base no que você aprendeu sobre os tipos de IA, Machine Learning e os impactos éticos, você acredita que a IA vai transformar positivamente a sociedade ou representa mais riscos? Justifique com argumentos baseados no conteúdo da aula.",
+    ctx:"Não há resposta certa ou errada — a IA avalia a qualidade do raciocínio e uso dos conceitos aprendidos.",
+    pts:500, time:180, diff:"hard",
+    kw:["benefício","risco","viés","privacidade","mercado de trabalho","automação","ética","responsabilidade","transformação","positivo","negativo","desafio","regulamentação","lgpd","decisão","impacto","sociedade","educação","saúde","consciência"]
+  }
+];
+
+// ─────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────
+let currentScreen = 's-intro';
+let sound = true;
+let audioCtx = null;
+let player = null; // { name, avatar, idx }
+let mIdx = 0;       // missão atual (0-14)
+let score = 0;
+let combo = 0;
+let correct = 0;
+let timerInt = null;
+let timeLeft = 30;
+let answered = false;
+let gameLog = [];   // { mIdx, correct, pts, time, aiScore? }
+let aiEvalsLocal = [];
+let rankCache = [];
+let liveTimer = null;
+
+const CIRC = 2 * Math.PI * 21; // ~131.9
+
+// ─────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────
+function goScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  currentScreen = id;
+  document.getElementById('aiAvatar').classList.toggle('hidden', !['s-game'].includes(id));
+  document.getElementById('liveIndicator').classList.toggle('hidden', id !== 's-rank');
+  if (id === 's-rank') renderRanking();
+  if (id === 's-prof') renderDashboard();
+  if (id === 's-login') renderStudentsList();
+  clearInterval(liveTimer);
+  if (id === 's-rank') liveTimer = setInterval(simulateLive, 4500);
+}
+
+// ─────────────────────────────────────────
+// INTRO — mission preview
+// ─────────────────────────────────────────
+(function buildPreview(){
+  const wrap = document.getElementById('missionPreview');
+  MISSIONS.forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'mp-item';
+    d.innerHTML = `<div class="mp-n">${String(m.id).padStart(2,'0')}</div>${m.title.split(' ').slice(0,2).join(' ')}`;
+    wrap.appendChild(d);
+  });
+})();
+
+// ─────────────────────────────────────────
+// STUDENTS LIST
+// ─────────────────────────────────────────
+function renderStudentsList() {
+  const grid = document.getElementById('studentsGrid');
+  grid.innerHTML = '';
+  STUDENTS.forEach((name, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'student-btn';
+    const initial = name.split(' ').slice(0,2).map(w=>w[0]).join('');
+    btn.innerHTML = `<div class="sb-av">${AVATARS[i]}</div><div><div class="sb-name">${name}</div><div class="sb-id">Aluno #${String(i+1).padStart(2,'0')}</div></div>`;
+    btn.onclick = () => selectStudent(i, name);
+    grid.appendChild(btn);
+  });
+}
+
+function selectStudent(i, name) {
+  player = { name, avatar: AVATARS[i], idx: i };
+  document.getElementById('tbPlayer').textContent = AVATARS[i] + ' ' + name.split(' ')[0];
+  mIdx = 0; score = 0; combo = 0; correct = 0; gameLog = [];
+  updateHUD();
+  goScreen('s-game');
+  loadMission();
+}
+
+// ─────────────────────────────────────────
+// AUDIO
+// ─────────────────────────────────────────
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function tone(f, type, dur, vol=0.25) {
+  if (!sound) return;
+  try {
+    const a = getAudio();
+    const o = a.createOscillator(), g = a.createGain();
+    o.connect(g); g.connect(a.destination);
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(vol, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + dur);
+    o.start(); o.stop(a.currentTime + dur);
+  } catch(e){}
+}
+const sfx = {
+  correct: ()=>{ tone(523,'sine',.1); setTimeout(()=>tone(659,'sine',.1),100); setTimeout(()=>tone(784,'sine',.15),200); },
+  wrong:   ()=>{ tone(220,'sawtooth',.2,.2); setTimeout(()=>tone(180,'sawtooth',.3,.15),150); },
+  combo:   ()=>{ [523,587,659,698,784,880].forEach((f,i)=>setTimeout(()=>tone(f,'triangle',.1),i*55)); },
+  tick:    ()=>tone(1000,'square',.04,.05),
+  finish:  ()=>{ [784,880,988,1047,1175].forEach((f,i)=>setTimeout(()=>tone(f,'sine',.35),i*110)); },
+  open:    ()=>tone(440,'sine',.2,.15)
+};
+document.getElementById('soundBtn').onclick = function(){
+  sound = !sound; this.textContent = sound ? '🔊' : '🔇';
+};
+
+// ─────────────────────────────────────────
+// GAME ENGINE
+// ─────────────────────────────────────────
+function loadMission() {
+  answered = false;
+  clearInterval(timerInt);
+  const m = MISSIONS[mIdx];
+
+  // Progress
+  const pct = Math.round((mIdx / MISSIONS.length) * 100);
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progLabel').textContent = `${mIdx} / ${MISSIONS.length}`;
+
+  // Mission info
+  document.getElementById('mNum').textContent = `MISSÃO ${String(m.id).padStart(2,'0')}`;
+  document.getElementById('mDiff').textContent = {easy:'FÁCIL',medium:'MÉDIO',hard:'DIFÍCIL'}[m.diff];
+  document.getElementById('mDiff').className = `m-diff diff-${m.diff}`;
+  document.getElementById('mPts').textContent = `+${m.pts} pts`;
+  document.getElementById('mQuestion').textContent = m.q;
+
+  const ctxEl = document.getElementById('mContext');
+  if (m.ctx) { ctxEl.textContent = '💡 ' + m.ctx; ctxEl.classList.remove('hidden'); }
+  else ctxEl.classList.add('hidden');
+
+  // Reset areas
+  const aw = document.getElementById('answersWrap');
+  const ow = document.getElementById('openWrap');
+  const fb = document.getElementById('feedbackRow');
+  aw.classList.add('hidden'); ow.classList.add('hidden');
+  document.getElementById('aiEvalBox').classList.add('hidden');
+  document.getElementById('openText').value = '';
+  document.getElementById('submitOpenBtn').disabled = false;
+  document.getElementById('submitOpenBtn').innerHTML = '🤖 Enviar para IA avaliar';
+  fb.classList.add('hidden'); fb.innerHTML = '';
+
+  if (m.type === 'multi') {
+    aw.classList.remove('hidden');
+    aw.innerHTML = '';
+    ['A','B','C','D'].forEach((l, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'ans-btn';
+      btn.innerHTML = `<span class="al">${l}</span><span>${m.opts[i]}</span>`;
+      btn.onclick = () => pickAnswer(i, btn);
+      aw.appendChild(btn);
+    });
+  } else {
+    ow.classList.remove('hidden');
+    sfx.open();
+  }
+
+  // AI tip
+  setAiTip(m);
+  // Animate entrance
+  const mc = document.getElementById('missionCard');
+  mc.style.opacity='0'; mc.style.transform='translateY(16px)';
+  requestAnimationFrame(()=>{ mc.style.transition='opacity .4s,transform .4s'; mc.style.opacity='1'; mc.style.transform='translateY(0)'; });
+
+  // Timer
+  timeLeft = m.time;
+  updateTimer(m.time);
+  timerInt = setInterval(() => {
+    timeLeft--;
+    updateTimer(m.time);
+    if (timeLeft <= 5) sfx.tick();
+    if (timeLeft <= 0) { clearInterval(timerInt); if (!answered) timeOut(); }
+  }, 1000);
+}
+
+function updateTimer(total) {
+  const frac = timeLeft / total;
+  const offset = CIRC * (1 - frac);
+  const c = document.getElementById('timerCircle');
+  c.style.strokeDashoffset = offset;
+  document.getElementById('timerNum').textContent = timeLeft;
+  c.style.stroke = timeLeft > 10 ? 'var(--cyan)' : timeLeft > 5 ? 'var(--yellow)' : 'var(--red)';
+}
+
+function updateHUD() {
+  document.getElementById('scoreVal').textContent = score.toLocaleString();
+  document.getElementById('comboVal').textContent = 'x' + combo;
+  document.getElementById('correctVal').textContent = correct + '/' + MISSIONS.length;
+}
+
+function pickAnswer(idx, btn) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInt);
+  const m = MISSIONS[mIdx];
+  document.querySelectorAll('.ans-btn').forEach(b => b.disabled = true);
+  btn.classList.add('selected');
+  setTimeout(() => {
+    document.querySelectorAll('.ans-btn').forEach((b, i) => {
+      if (i === m.ans) b.classList.add('correct');
+      else if (b === btn && idx !== m.ans) b.classList.add('wrong');
+    });
+    if (idx === m.ans) onCorrect(btn);
+    else onWrong();
+  }, 280);
+}
+
+function onCorrect(btn) {
+  sfx.correct();
+  combo++; correct++;
+  const timeBonus = Math.floor(timeLeft * 4);
+  const comboBonus = combo > 1 ? Math.floor(MISSIONS[mIdx].pts * (combo-1) * 0.12) : 0;
+  const earned = MISSIONS[mIdx].pts + timeBonus + comboBonus;
+  score += earned;
+  updateHUD();
+  if (combo >= 2) showCombo();
+  spawnSparks(btn);
+  showFeedback(true, `+${earned} pts! ${combo >= 3 ? '🔥 COMBO x'+combo+'!' : ''}`);
+  gameLog.push({ mIdx, correct:true, pts:earned, time: MISSIONS[mIdx].time - timeLeft });
+  saveProgress();
+  setTimeout(nextMission, 1600);
+}
+
+function onWrong() {
+  sfx.wrong();
+  const m = MISSIONS[mIdx];
+  combo = 0;
+  updateHUD();
+  showFeedback(false, `Resposta correta: "${m.opts[m.ans]}"`);
+  gameLog.push({ mIdx, correct:false, pts:0, time: m.time - timeLeft });
+  saveProgress();
+  setTimeout(nextMission, 2000);
+}
+
+function timeOut() {
+  const m = MISSIONS[mIdx];
+  if (m.type === 'multi') {
+    document.querySelectorAll('.ans-btn').forEach((b,i) => {
+      b.disabled = true;
+      if (i === m.ans) b.classList.add('correct');
+    });
+  }
+  combo = 0; updateHUD();
+  showFeedback(false, '⏱ Tempo esgotado!');
+  gameLog.push({ mIdx, correct:false, pts:0, time: m.time });
+  saveProgress();
+  setTimeout(nextMission, 2000);
+}
+
+async function submitOpen() {
+  if (answered) return;
+  const text = document.getElementById('openText').value.trim();
+  if (text.length < 15) {
+    document.getElementById('openText').style.borderColor = 'var(--red)';
+    setTimeout(() => document.getElementById('openText').style.borderColor = '', 1200);
+    return;
+  }
+  answered = true;
+  clearInterval(timerInt);
+  const btn = document.getElementById('submitOpenBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> IA processando...';
+  const box = document.getElementById('aiEvalBox');
+  box.classList.remove('hidden');
+  box.innerHTML = '<div class="ai-eval-label"><div class="spinner"></div> Avaliando com Inteligência Artificial...</div>';
+
+  const m = MISSIONS[mIdx];
+  let aiScore = 0, aiFeedback = '', highlights = '', missing = '';
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:`Você é professor avaliando resposta de aluno do ensino médio/técnico sobre IA e sistemas de recomendação. Avalie de 0 a 100 e dê feedback construtivo, encorajador e em português.
+
+TEMA DA MISSÃO: ${m.title}
+PERGUNTA: ${m.q}
+RESPOSTA DO ALUNO: ${text}
+
+Responda SOMENTE em JSON válido, sem markdown:
+{"score":0,"feedback":"...","highlights":"...","missing":"..."}`}]
+      })
+    });
+    const data = await resp.json();
+    const raw = data.content.find(c=>c.type==='text')?.text||'{}';
+    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    aiScore = parsed.score||0; aiFeedback = parsed.feedback||''; highlights = parsed.highlights||''; missing = parsed.missing||'';
+  } catch(e) {
+    // fallback
+    const kw = m.kw || [];
+    const found = kw.filter(k => text.toLowerCase().includes(k)).length;
+    aiScore = Math.min(100, Math.round((found/Math.max(kw.length,1))*110));
+    aiFeedback = aiScore>=70 ? 'Boa resposta! Você cobriu os principais conceitos desta missão.' : aiScore>=40 ? 'Resposta parcial. Tente aprofundar mais o raciocínio.' : 'Resposta muito superficial. Revise o conteúdo e tente novamente.';
+  }
+
+  const cl = aiScore>=70?'sb-hi':aiScore>=40?'sb-mid':'sb-lo';
+  const earned = Math.floor(m.pts * aiScore / 100);
+  score += earned;
+  if (aiScore >= 55) { correct++; combo++; } else combo = 0;
+  updateHUD();
+
+  box.innerHTML = `
+    <div class="ai-eval-label">🤖 AVALIAÇÃO IA <span class="score-badge ${cl}">${aiScore}/100</span></div>
+    <p>${aiFeedback}</p>
+    ${highlights ? `<p style="margin-top:6px;font-size:.8rem;color:var(--green)">✅ ${highlights}</p>` : ''}
+    ${missing ? `<p style="margin-top:4px;font-size:.8rem;color:var(--yellow)">💡 Poderia mencionar: ${missing}</p>` : ''}
+    <p style="margin-top:8px;font-size:.78rem;color:var(--text3)">Ganhou <strong style="color:var(--cyan)">+${earned} pts</strong></p>
+  `;
+  btn.innerHTML = `✓ Avaliado (${aiScore}/100)`;
+  if (aiScore >= 55) { sfx.correct(); if (combo>=2) showCombo(); spawnSparks(document.getElementById('missionCard')); }
+  else sfx.wrong();
+
+  aiEvalsLocal.push({ student: player.name, mission: m.title, answer: text.substring(0,100)+'...', score: aiScore, feedback: aiFeedback });
+  gameLog.push({ mIdx, correct: aiScore>=55, pts: earned, time: m.time - timeLeft, aiScore });
+  saveProgress();
+  setTimeout(nextMission, 3800);
+}
+
+function nextMission() {
+  mIdx++;
+  if (mIdx >= MISSIONS.length) endGame();
+  else loadMission();
+}
+
+function endGame() {
+  clearInterval(timerInt);
+  sfx.finish();
+  // Progress bar to 100%
+  document.getElementById('progFill').style.width = '100%';
+  document.getElementById('progLabel').textContent = `${MISSIONS.length} / ${MISSIONS.length}`;
+
+  const pct = correct / MISSIONS.length;
+  let grade, gClass, icon, msg;
+  if (pct >= .92) { grade='A+'; gClass='gr-a'; icon='🏆'; msg='Missão cumprida com excelência! Você domina o tema!'; }
+  else if (pct >= .75) { grade='B+'; gClass='gr-b'; icon='🥇'; msg='Ótimo desempenho! Quase perfeito nas missões!'; }
+  else if (pct >= .58) { grade='C+'; gClass='gr-c'; icon='🥈'; msg='Bom trabalho! Continue explorando o universo da IA.'; }
+  else { grade='D'; gClass='gr-d'; icon='📚'; msg='Continue estudando! Cada missão é um aprendizado.'; }
+
+  document.getElementById('resIcon').textContent = icon;
+  document.getElementById('resGrade').textContent = grade;
+  document.getElementById('resGrade').className = 'result-grade ' + gClass;
+  document.getElementById('resMsg').textContent = msg;
+  document.getElementById('resPts').textContent = score.toLocaleString();
+  document.getElementById('resAcc').textContent = correct + '/' + MISSIONS.length;
+
+  saveToFirebase().then(() => {
+    loadRankingData().then(data => {
+      const pos = data.findIndex(r => r.name === player.name) + 1;
+      document.getElementById('resRank').textContent = '#' + (pos || '?');
+    });
+  });
+
+  goScreen('s-results');
+  spawnFinale();
+}
+
+// ─────────────────────────────────────────
+// FIREBASE
+// ─────────────────────────────────────────
+async function saveToFirebase() {
+  if (!fbOk || !player) return;
+  try {
+    const ref = db.ref('rankings/' + player.name.replace(/\s/g,'_'));
+    const snap = await ref.once('value');
+    const prev = snap.val();
+    if (!prev || score > (prev.score || 0)) {
+      await ref.set({ name: player.name, avatar: player.avatar, score, correct, missions: MISSIONS.length, ts: Date.now() });
+    }
+  } catch(e) {}
+}
+
+async function saveProgress() {
+  if (!fbOk || !player) return;
+  try {
+    await db.ref('progress/' + player.name.replace(/\s/g,'_')).set({ name: player.name, mIdx, score, correct, ts: Date.now() });
+  } catch(e) {}
+}
+
+async function loadRankingData() {
+  if (!fbOk) return getSimulatedRanking();
+  try {
+    const snap = await db.ref('rankings').orderByChild('score').limitToLast(50).once('value');
+    const data = [];
+    snap.forEach(c => data.unshift(c.val()));
+    rankCache = data.length > 0 ? data : getSimulatedRanking();
+    return rankCache;
+  } catch(e) { return getSimulatedRanking(); }
+}
+
+function getSimulatedRanking() {
+  const simScores = [2150,1980,1820,1740,1650,1530,1450,1380,1290,1200,1080,950,840,720,640,540,430,310];
+  return STUDENTS.map((name, i) => ({
+    name, avatar: AVATARS[i],
+    score: simScores[i] || Math.floor(Math.random()*500+200),
+    correct: Math.floor(Math.random()*8+4),
+    missions: MISSIONS.length
+  }));
+}
+
+// ─────────────────────────────────────────
+// RANKING
+// ─────────────────────────────────────────
+async function renderRanking() {
+  const data = await loadRankingData();
+  data.sort((a,b) => b.score - a.score);
+  // Podium
+  const pod = document.getElementById('rankPodium');
+  const top3 = [data[1], data[0], data[2]].filter(Boolean);
+  const classes = ['pb2','pb1','pb3'], medals = ['2','1','3'];
+  pod.innerHTML = top3.map((p,i) => `
+    <div class="pod-item">
+      <div class="pod-av">${p.avatar}</div>
+      <div class="pod-name">${p.name.split(' ')[0]}</div>
+      <div class="pod-score">${(p.score||0).toLocaleString()}</div>
+      <div class="pod-bar ${classes[i]}">${medals[i]}</div>
+    </div>`).join('');
+  // List
+  const list = document.getElementById('rankList');
+  list.innerHTML = data.map((p, i) => {
+    const isMe = player && p.name === player.name;
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1;
+    return `<div class="rank-row${isMe?' me':''}">
+      <span class="rr-pos">${medal}</span>
+      <span class="rr-av">${p.avatar}</span>
+      <span class="rr-name">${p.name}${isMe?' <span class="chip chip-yellow" style="font-size:.65rem">Você</span>':''}</span>
+      <span class="rr-score">${(p.score||0).toLocaleString()}</span>
+      <span class="rr-correct">${p.correct||0}/${p.missions||12}✓</span>
+    </div>`;
+  }).join('');
+}
+
+function simulateLive() {
+  const p = rankCache[Math.floor(Math.random()*rankCache.length)];
+  if (!p) return;
+  p.score = (p.score||0) + Math.floor(Math.random()*120+30);
+  p.correct = Math.min(12, (p.correct||0) + (Math.random()>.6?1:0));
+  rankCache.sort((a,b)=>b.score-a.score);
+  renderRanking();
+  showToast(`${p.avatar} ${p.name.split(' ')[0]} acaba de marcar ${p.score.toLocaleString()} pts!`);
+}
+
+// ─────────────────────────────────────────
+// DASHBOARD PROFESSOR
+// ─────────────────────────────────────────
+async function renderDashboard() {
+  const data = await loadRankingData();
+  data.sort((a,b)=>b.score-a.score);
+  // Stats
+  const avg = Math.round(data.reduce((s,r)=>s+(r.score||0),0)/data.length);
+  const avgAcc = Math.round(data.reduce((s,r)=>s+(r.correct||0),0)/data.length/MISSIONS.length*100);
+  document.getElementById('profStats').innerHTML = `
+    <div class="stat-box"><div class="sbi">👥</div><div class="sbv text-cyan">${data.length}</div><div class="sbl">Alunos cadastrados</div><div class="sbd neutral">${data.filter(r=>r.score>0).length} já jogaram</div></div>
+    <div class="stat-box"><div class="sbi">⭐</div><div class="sbv" style="color:var(--cyan)">${avg.toLocaleString()}</div><div class="sbl">Pontuação média</div><div class="sbd up">Turma engajada</div></div>
+    <div class="stat-box"><div class="sbi">✅</div><div class="sbv text-green">${avgAcc}%</div><div class="sbl">Taxa de acertos</div><div class="sbd ${avgAcc>=70?'up':'down'}">${avgAcc>=70?'Acima da meta':'Abaixo da meta'}</div></div>
+    <div class="stat-box"><div class="sbi">🤖</div><div class="sbv text-purple">${aiEvalsLocal.length}</div><div class="sbl">Avaliações por IA</div><div class="sbd neutral">Respostas abertas</div></div>
+    <div class="stat-box"><div class="sbi">🏆</div><div class="sbv text-yellow">${data[0]?.name?.split(' ')[0]||'—'}</div><div class="sbl">Líder da turma</div><div class="sbd up">${(data[0]?.score||0).toLocaleString()} pts</div></div>
+    <div class="stat-box"><div class="sbi">🎯</div><div class="sbv">${data.filter(r=>(r.correct||0)>=10).length}</div><div class="sbl">Alunos ≥ 10/12</div><div class="sbd neutral">Missões completadas</div></div>
+  `;
+  // Student cards
+  const grid = document.getElementById('studCardsGrid');
+  grid.innerHTML = data.map((r, i) => {
+    const perf = Math.round(((r.correct||0)/MISSIONS.length)*100);
+    const cl = perf>=70?'sf-hi':perf>=40?'sf-mid':'sf-lo';
+    return `<div class="stud-card">
+      <div class="stud-top">
+        <div class="stud-av">${r.avatar}</div>
+        <div class="stud-info"><div class="sn">#${i+1} ${r.name}</div><div class="ss">${(r.score||0).toLocaleString()} pts</div></div>
+      </div>
+      <div class="stud-bar-wrap"><div class="stud-bar-fill ${cl}" style="width:${perf}%"></div></div>
+      <div class="stud-bottom"><span>${perf}%</span><span>${r.correct||0}/${MISSIONS.length} acertos</span></div>
+    </div>`;
+  }).join('');
+  // AI Evals
+  const tbody = document.getElementById('aiEvalsBody');
+  const allEvals = [...aiEvalsLocal];
+  if (allEvals.length === 0) allEvals.push(
+    { student:'SAMPLE', mission:'Benefícios para Empresa', answer:'A IA aumenta vendas e fideliza clientes através de personalização...', score:82, feedback:'Boa resposta! Mencionou os principais benefícios comerciais.' },
+    { student:'SAMPLE', mission:'Viés Algorítmico', answer:'Viés é quando a IA discrimina grupos por dados históricos tendenciosos...', score:91, feedback:'Excelente! Citou dados históricos e discriminação corretamente.' }
+  );
+  tbody.innerHTML = allEvals.map(e => {
+    const cl = e.score>=70?'sb-hi':e.score>=40?'sb-mid':'sb-lo';
+    return `<tr>
+      <td>${e.student.split(' ')[0]}</td>
+      <td style="color:var(--text2);font-size:.78rem">${e.mission}</td>
+      <td style="color:var(--text3);font-size:.78rem;max-width:180px">${e.answer}</td>
+      <td><span class="score-badge ${cl}">${e.score}/100</span></td>
+      <td style="font-size:.78rem;color:var(--text2);max-width:200px;line-height:1.5">${e.feedback}</td>
+    </tr>`;
+  }).join('');
+  // Mission bars
+  const bars = document.getElementById('missionBars');
+  bars.innerHTML = MISSIONS.map(m => {
+    const logs = gameLog.filter(l => l.mIdx === m.id-1);
+    const pct = logs.length>0 ? Math.round(logs.filter(l=>l.correct).length/logs.length*100) : Math.floor(Math.random()*40+40);
+    const cl = pct>=70?'var(--cyan)':pct>=40?'var(--yellow)':'var(--red)';
+    return `<div class="mb-row">
+      <div class="mb-label"><span>${m.id}. ${m.title}</span><span style="font-family:'Orbitron',monospace;font-size:.78rem;color:${cl}">${pct}%</span></div>
+      <div class="mb-bar"><div class="mb-fill" style="width:${pct}%;background:${cl}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  ['alunos','respostas','missoes'].forEach(t => {
+    const el2 = document.getElementById('tab-'+t);
+    if (el2) el2.classList.toggle('hidden', t!==name);
+  });
+}
+document.getElementById('searchProf')?.addEventListener('input',function(){
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('.stud-card').forEach(c => {
+    c.style.display = c.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+
+function exportData() {
+  loadRankingData().then(data => {
+    const obj = { timestamp: new Date().toISOString(), theme: 'IA em Sistemas de Recomendação', missions: MISSIONS.length, students: data, aiEvaluations: aiEvalsLocal };
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}));
+    a.download = 'missao-ia-relatorio-' + new Date().toISOString().split('T')[0] + '.json';
+    a.click();
+    showToast('📥 Relatório exportado!');
+  });
+}
+
+// ─────────────────────────────────────────
+// AI TIPS
+// ─────────────────────────────────────────
+const tips = {
+  easy: ["Questão mais simples — confie no que aprendeu! 💡","Use o contexto como dica!","Pense na lógica do negócio."],
+  medium: ["Atenção aos detalhes! 🧠","Elimine as alternativas erradas primeiro.","Relacione com exemplos reais."],
+  hard: ["Resposta aberta — quanto mais detalhes, mais pontos! 🤖","A IA vai avaliar sua capacidade de raciocínio.","Cite conceitos técnicos que você aprendeu."]
+};
+function setAiTip(m) {
+  const list = tips[m.diff] || tips.medium;
+  document.getElementById('aiBubble').textContent = list[Math.floor(Math.random()*list.length)];
+}
+
+// ─────────────────────────────────────────
+// FEEDBACK / VISUAL FX
+// ─────────────────────────────────────────
+function showFeedback(ok, msg) {
+  const row = document.getElementById('feedbackRow');
+  row.className = ok ? 'feedback-overlay fo-correct' : 'feedback-overlay fo-wrong';
+  row.textContent = ok ? '✓ ' + msg : '✗ ' + msg;
+  row.classList.remove('hidden');
+}
+
+function showCombo() {
+  sfx.combo();
+  const el = document.getElementById('comboToast');
+  el.textContent = combo + 'x COMBO! 🔥';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+function showToast(msg) {
+  const el = document.getElementById('liveToast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function spawnSparks(el) {
+  const rect = el.getBoundingClientRect();
+  const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+  const colors = ['#00f5ff','#39ff14','#ffe600','#ff2d55','#a855f7'];
+  for (let i=0;i<14;i++) {
+    const s = document.createElement('div');
+    s.className = 'sp';
+    const a = (i/14)*Math.PI*2, d = 35+Math.random()*65;
+    s.style.cssText = `left:${cx}px;top:${cy}px;background:${colors[i%colors.length]};--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d}px;animation-delay:${Math.random()*.15}s`;
+    document.getElementById('sparklesEl').appendChild(s);
+    setTimeout(()=>s.remove(),900);
+  }
+}
+
+function spawnFinale() {
+  for (let i=0;i<50;i++) {
+    setTimeout(() => {
+      const s = document.createElement('div');
+      s.className = 'sp';
+      const colors = ['#00f5ff','#39ff14','#ffe600','#ff2d55','#a855f7','#fff'];
+      s.style.cssText = `left:${Math.random()*window.innerWidth}px;top:${100+Math.random()*window.innerHeight*.6}px;width:10px;height:10px;background:${colors[Math.floor(Math.random()*colors.length)]};--dx:${(Math.random()-.5)*90}px;--dy:${-30-Math.random()*70}px`;
+      document.getElementById('sparklesEl').appendChild(s);
+      setTimeout(()=>s.remove(),850);
+    }, i*40);
+  }
+}
+</script>
+</body>
+</html>
