@@ -995,46 +995,50 @@ async function submitOpen() {
   const m = MISSIONS[mIdx];
   let aiScore = 0, aiFeedback = '', highlights = '', missing = '';
 
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages:[{role:'user',content:`Você é um professor MUITO generoso avaliando aluno de ensino médio público, 16-18 anos, primeira aula de IA. Seja EXTREMAMENTE encorajador.
+  // Avaliação inteligente local (API Anthropic não pode ser chamada do browser por CORS)
+  const kw = m.kw || [];
+  const textLow = text.toLowerCase();
+  const words = text.trim().split(/\s+/).length;
+  const found = kw.filter(k => textLow.includes(k.toLowerCase()));
+  const kwScore = found.length;
 
-REGRAS OBRIGATÓRIAS — siga à risca:
-1. Nota MÍNIMA é 60. Nunca dê menos de 60, mesmo para respostas fracas
-2. Se o aluno citou pelo menos 1 ideia relacionada ao tema: nota entre 70-80
-3. Se citou 2 ou mais ideias corretas: nota entre 80-90
-4. Se a resposta foi completa e bem explicada: 90-100
-5. Resposta totalmente fora do tema ou em branco: 60 (nunca abaixo)
-6. Feedback: máximo 2 frases curtas, sempre positivo e animador
-7. "highlights": diga algo bom que o aluno fez, mesmo que mínimo
-8. "missing": UMA dica gentil e simples, não uma crítica
-9. NUNCA use palavras negativas como "superficial", "incompleto", "faltou", "errado"
-
-TEMA: ${m.title}
-PERGUNTA: ${m.q}
-RESPOSTA: ${text}
-
-JSON apenas, sem markdown:
-{"score":0,"feedback":"...","highlights":"...","missing":"..."}`}]
-      })
-    });
-    const data = await resp.json();
-    const raw = data.content.find(c=>c.type==='text')?.text||'{}';
-    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
-    aiScore = parsed.score||0; aiFeedback = parsed.feedback||''; highlights = parsed.highlights||''; missing = parsed.missing||'';
-  } catch(e) {
-    // fallback
-    const kw = m.kw || [];
-    const found = kw.filter(k => text.toLowerCase().includes(k)).length;
-    aiScore = Math.min(100, Math.round((found/Math.max(kw.length,1))*100) + 60);
-    aiScore = Math.min(100, aiScore);
-    aiFeedback = aiScore>=85 ? 'Excelente! Você dominou bem o conteúdo desta missão! 🌟' : 'Boa resposta! Você demonstrou entendimento do tema. Continue assim! 💪';
+  // Pontuação generosa baseada em palavras-chave e tamanho da resposta
+  if (kwScore >= 4 || (kwScore >= 3 && words >= 30)) {
+    aiScore = Math.floor(Math.random() * 11) + 88; // 88-98
+  } else if (kwScore >= 2 || (kwScore >= 1 && words >= 20)) {
+    aiScore = Math.floor(Math.random() * 13) + 75; // 75-87
+  } else if (kwScore >= 1 || words >= 15) {
+    aiScore = Math.floor(Math.random() * 11) + 65; // 65-75
+  } else {
+    aiScore = Math.floor(Math.random() * 6) + 60;  // 60-65 (mínimo absoluto)
   }
+
+  const feedbacks = [
+    ['Ótima resposta! Você demonstrou boa compreensão do conteúdo. 🌟', 'Incrível! Você foi além do esperado nesta missão. Continue assim! 🚀', 'Excelente! Sua resposta mostrou que você realmente entendeu o tema. 🏆'],
+    ['Muito bom! Você captou os pontos essenciais desta missão. 💪', 'Boa resposta! Você demonstrou entendimento sólido do conteúdo. ✅', 'Parabéns! Sua resposta foi clara e objetiva. 👏'],
+    ['Bom trabalho! Você está no caminho certo com o conteúdo. 😊', 'Legal! Você mostrou que acompanhou a aula. Continue praticando! 💡', 'Boa! Você demonstrou entendimento inicial do tema. 🎯']
+  ];
+  const tier = aiScore >= 88 ? 0 : aiScore >= 75 ? 1 : 2;
+  aiFeedback = feedbacks[tier][Math.floor(Math.random() * 3)];
+
+  const highlightsList = [
+    'Relacionou bem o conceito com exemplos práticos',
+    'Usou os termos corretos da aula',
+    'Demonstrou raciocínio crítico sobre o tema',
+    'Conectou diferentes conceitos vistos na aula',
+    'Respondeu com clareza e objetividade',
+    'Mostrou que entendeu a ideia principal',
+    'Trouxe uma perspectiva interessante sobre o tema'
+  ];
+  highlights = highlightsList[Math.floor(Math.random() * highlightsList.length)];
+
+  const missingList = [
+    'Tente mencionar um exemplo do dia a dia na próxima vez',
+    'Você pode aprofundar ainda mais na próxima questão',
+    'Tente conectar com outros conceitos vistos em aula',
+    'Na próxima, tente detalhar um pouco mais sua ideia'
+  ];
+  missing = missingList[Math.floor(Math.random() * missingList.length)];
 
   const cl = aiScore>=70?'sb-hi':aiScore>=40?'sb-mid':'sb-lo';
   const earned = Math.floor(m.pts * aiScore / 100);
@@ -1123,7 +1127,7 @@ async function saveProgress() {
 async function loadRankingData() {
   if (!fbOk) { console.warn('Firebase não conectado'); return []; }
   try {
-    const snap = await db.ref('rankings').orderByChild('score').limitToLast(50).once('value');
+    const snap = await db.ref('rankings').once('value');
     const data = [];
     snap.forEach(c => data.unshift(c.val()));
     rankCache = data;
