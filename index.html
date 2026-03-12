@@ -506,7 +506,11 @@ try {
   firebase.initializeApp(fbConfig);
   db = firebase.database();
   fbOk = true;
-} catch(e) { fbOk = false; }
+  console.log('Firebase OK:', fbConfig.databaseURL);
+} catch(e) {
+  fbOk = false;
+  console.error('Firebase ERRO:', e);
+}
 
 // ─────────────────────────────────────────
 // ALUNOS
@@ -998,21 +1002,24 @@ async function submitOpen() {
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:1000,
-        messages:[{role:'user',content:`Você é um professor muito incentivador avaliando a resposta de um aluno de 16 a 18 anos do ensino médio público em uma aula introdutória de Inteligência Artificial. Seja GENEROSO e MOTIVADOR na avaliação.
+        messages:[{role:'user',content:`Você é um professor MUITO generoso avaliando aluno de ensino médio público, 16-18 anos, primeira aula de IA. Seja EXTREMAMENTE encorajador.
 
-REGRAS IMPORTANTES:
-- Alunos dessa idade e contexto costumam dar respostas curtas e simples — isso é NORMAL e ESPERADO
-- Se o aluno demonstrou qualquer entendimento do conceito, mesmo que parcial ou com palavras simples, valorize bastante
-- Notas: 70-100 para quem entendeu o essencial (mesmo que de forma simples), 45-69 para quem mostrou algum entendimento, abaixo de 45 apenas se a resposta for totalmente fora do tema
-- O feedback deve ser curto (2 frases), positivo e motivador — nunca desanimar o aluno
-- Destaque sempre algo positivo, mesmo nas respostas mais fracas
-- "missing" deve ser apenas 1 sugestão simples e gentil, nunca uma lista de críticas
+REGRAS OBRIGATÓRIAS — siga à risca:
+1. Nota MÍNIMA é 60. Nunca dê menos de 60, mesmo para respostas fracas
+2. Se o aluno citou pelo menos 1 ideia relacionada ao tema: nota entre 70-80
+3. Se citou 2 ou mais ideias corretas: nota entre 80-90
+4. Se a resposta foi completa e bem explicada: 90-100
+5. Resposta totalmente fora do tema ou em branco: 60 (nunca abaixo)
+6. Feedback: máximo 2 frases curtas, sempre positivo e animador
+7. "highlights": diga algo bom que o aluno fez, mesmo que mínimo
+8. "missing": UMA dica gentil e simples, não uma crítica
+9. NUNCA use palavras negativas como "superficial", "incompleto", "faltou", "errado"
 
-TEMA DA MISSÃO: ${m.title}
+TEMA: ${m.title}
 PERGUNTA: ${m.q}
-RESPOSTA DO ALUNO: ${text}
+RESPOSTA: ${text}
 
-Responda SOMENTE em JSON válido, sem markdown:
+JSON apenas, sem markdown:
 {"score":0,"feedback":"...","highlights":"...","missing":"..."}`}]
       })
     });
@@ -1024,9 +1031,9 @@ Responda SOMENTE em JSON válido, sem markdown:
     // fallback
     const kw = m.kw || [];
     const found = kw.filter(k => text.toLowerCase().includes(k)).length;
-    aiScore = Math.min(100, Math.round((found/Math.max(kw.length,1))*110));
-    aiFeedback = aiScore>=70 ? 'Ótimo! Você demonstrou boa compreensão do conteúdo. Continue assim! 🌟' : aiScore>=40 ? 'Bom trabalho! Você mostrou entendimento do tema. Com a prática vai melhorar ainda mais! 💪' : 'Você está no caminho certo! Tente relacionar sua resposta com os exemplos da aula. 🚀';
-    aiScore = Math.max(aiScore, 40);
+    aiScore = Math.min(100, Math.round((found/Math.max(kw.length,1))*100) + 60);
+    aiScore = Math.min(100, aiScore);
+    aiFeedback = aiScore>=85 ? 'Excelente! Você dominou bem o conteúdo desta missão! 🌟' : 'Boa resposta! Você demonstrou entendimento do tema. Continue assim! 💪';
   }
 
   const cl = aiScore>=70?'sb-hi':aiScore>=40?'sb-mid':'sb-lo';
@@ -1101,8 +1108,9 @@ async function saveToFirebase() {
     const prev = snap.val();
     if (!prev || score > (prev.score || 0)) {
       await ref.set({ name: player.name, avatar: player.avatar, score, correct, missions: MISSIONS.length, ts: Date.now() });
+      console.log('Firebase SALVO:', player.name, score);
     }
-  } catch(e) {}
+  } catch(e) { console.error('Firebase SAVE ERRO:', e); }
 }
 
 async function saveProgress() {
@@ -1113,14 +1121,15 @@ async function saveProgress() {
 }
 
 async function loadRankingData() {
-  if (!fbOk) return [];
+  if (!fbOk) { console.warn('Firebase não conectado'); return []; }
   try {
     const snap = await db.ref('rankings').orderByChild('score').limitToLast(50).once('value');
     const data = [];
     snap.forEach(c => data.unshift(c.val()));
     rankCache = data;
+    console.log('Firebase LIDO:', data.length, 'entradas');
     return rankCache;
-  } catch(e) { return []; }
+  } catch(e) { console.error('Firebase READ ERRO:', e); return []; }
 }
 
 // ─────────────────────────────────────────
