@@ -83,10 +83,10 @@ h1,h2,h3,.mono{font-family:'Orbitron',monospace}
 .login-header h2{font-size:1.8rem;font-weight:900;letter-spacing:-1px}
 .login-header p{color:var(--text2);margin-top:.4rem}
 .students-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.75rem;max-width:900px;width:100%}
-.student-btn{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:.85rem 1.1rem;cursor:pointer;transition:all .2s;text-align:left;display:flex;align-items:center;gap:.75rem;font-family:'Exo 2',sans-serif}
+.student-btn{background:#131d33;border:1.5px solid rgba(0,245,255,0.18);border-radius:12px;padding:.85rem 1.1rem;cursor:pointer;transition:all .2s;text-align:left;display:flex;align-items:center;gap:.75rem;font-family:'Exo 2',sans-serif}
 .student-btn:hover{border-color:var(--cyan);background:rgba(0,245,255,0.04);transform:translateX(4px)}
 .student-btn .sb-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,rgba(0,245,255,0.2),rgba(168,85,247,0.2));border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
-.student-btn .sb-name{font-size:.9rem;font-weight:600;line-height:1.3}
+.student-btn .sb-name{font-size:.9rem;font-weight:700;line-height:1.3;color:#e2e8f0;text-transform:capitalize;letter-spacing:.3px}
 .student-btn .sb-id{font-size:.7rem;color:var(--text3)}
 .student-btn.done{border-color:var(--green);opacity:.7}
 .student-btn.done .sb-av{background:rgba(57,255,20,0.15)}
@@ -491,10 +491,13 @@ h1,h2,h3,.mono{font-family:'Orbitron',monospace}
 // FIREBASE CONFIG
 // ─────────────────────────────────────────
 const fbConfig = {
-  apiKey: "AIzaSyDemoKeyPlaceholder",
-  authDomain: "missao-ia-demo.firebaseapp.com",
-  databaseURL: "https://missao-ia-demo-default-rtdb.firebaseio.com",
-  projectId: "missao-ia-demo"
+  apiKey: "AIzaSyD3kgy_I-8adWJuJRGJX2dFEqxhkXI_az4",
+  authDomain: "missao-ia-turma-ds.firebaseapp.com",
+  databaseURL: "https://missao-ia-turma-ds-default-rtdb.firebaseio.com",
+  projectId: "missao-ia-turma-ds",
+  storageBucket: "missao-ia-turma-ds.firebasestorage.app",
+  messagingSenderId: "664915248696",
+  appId: "1:664915248696:web:e275758eb17ee2985308cd"
 };
 
 let db = null;
@@ -753,10 +756,32 @@ function goScreen(id) {
 function renderStudentsList() {
   const grid = document.getElementById('studentsGrid');
   grid.innerHTML = '';
+
+  // ── CARD PROFESSOR TESTE ──
+  const testBtn = document.createElement('button');
+  testBtn.className = 'student-btn';
+  testBtn.style.cssText = 'border-color:rgba(255,230,0,0.5);background:rgba(255,230,0,0.06);grid-column:1/-1;';
+  testBtn.innerHTML = `
+    <div class="sb-av" style="background:linear-gradient(135deg,rgba(255,230,0,0.3),rgba(255,150,0,0.3));border-color:rgba(255,230,0,0.5);font-size:1.2rem;">🧪</div>
+    <div>
+      <div class="sb-name" style="color:#ffe600;font-size:1rem;">PROFESSOR TESTE</div>
+      <div class="sb-id" style="color:rgba(255,230,0,0.5);">Modo teste — não salva no ranking</div>
+    </div>
+    <div style="margin-left:auto;font-size:.7rem;background:rgba(255,230,0,0.12);border:1px solid rgba(255,230,0,0.3);color:#ffe600;padding:3px 10px;border-radius:100px;font-weight:700;white-space:nowrap;">👨‍🏫 TESTE</div>
+  `;
+  testBtn.onclick = () => selectStudent(-1, 'PROFESSOR TESTE');
+  grid.appendChild(testBtn);
+
+  // ── SEPARADOR ──
+  const sep = document.createElement('div');
+  sep.style.cssText = 'grid-column:1/-1;display:flex;align-items:center;gap:.75rem;padding:.25rem 0;';
+  sep.innerHTML = `<div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">Alunos da turma</span><div style="flex:1;height:1px;background:var(--border)"></div>`;
+  grid.appendChild(sep);
+
+  // ── ALUNOS ──
   STUDENTS.forEach((name, i) => {
     const btn = document.createElement('button');
     btn.className = 'student-btn';
-    const initial = name.split(' ').slice(0,2).map(w=>w[0]).join('');
     btn.innerHTML = `<div class="sb-av">${AVATARS[i]}</div><div><div class="sb-name">${name}</div><div class="sb-id">Aluno #${String(i+1).padStart(2,'0')}</div></div>`;
     btn.onclick = () => selectStudent(i, name);
     grid.appendChild(btn);
@@ -764,8 +789,9 @@ function renderStudentsList() {
 }
 
 function selectStudent(i, name) {
-  player = { name, avatar: AVATARS[i], idx: i };
-  document.getElementById('tbPlayer').textContent = AVATARS[i] + ' ' + name.split(' ')[0];
+  const isTest = name === 'PROFESSOR TESTE';
+  player = { name, avatar: isTest ? '🧪' : AVATARS[i], idx: i, isTest };
+  document.getElementById('tbPlayer').textContent = (isTest ? '🧪' : AVATARS[i]) + ' ' + (isTest ? 'Teste' : name.split(' ')[0]);
   mIdx = 0; score = 0; combo = 0; correct = 0; gameLog = [];
   updateHUD();
   goScreen('s-game');
@@ -972,7 +998,15 @@ async function submitOpen() {
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:1000,
-        messages:[{role:'user',content:`Você é professor avaliando resposta de aluno do ensino médio/técnico sobre IA e sistemas de recomendação. Avalie de 0 a 100 e dê feedback construtivo, encorajador e em português.
+        messages:[{role:'user',content:`Você é um professor muito incentivador avaliando a resposta de um aluno de 16 a 18 anos do ensino médio público em uma aula introdutória de Inteligência Artificial. Seja GENEROSO e MOTIVADOR na avaliação.
+
+REGRAS IMPORTANTES:
+- Alunos dessa idade e contexto costumam dar respostas curtas e simples — isso é NORMAL e ESPERADO
+- Se o aluno demonstrou qualquer entendimento do conceito, mesmo que parcial ou com palavras simples, valorize bastante
+- Notas: 70-100 para quem entendeu o essencial (mesmo que de forma simples), 45-69 para quem mostrou algum entendimento, abaixo de 45 apenas se a resposta for totalmente fora do tema
+- O feedback deve ser curto (2 frases), positivo e motivador — nunca desanimar o aluno
+- Destaque sempre algo positivo, mesmo nas respostas mais fracas
+- "missing" deve ser apenas 1 sugestão simples e gentil, nunca uma lista de críticas
 
 TEMA DA MISSÃO: ${m.title}
 PERGUNTA: ${m.q}
@@ -991,7 +1025,8 @@ Responda SOMENTE em JSON válido, sem markdown:
     const kw = m.kw || [];
     const found = kw.filter(k => text.toLowerCase().includes(k)).length;
     aiScore = Math.min(100, Math.round((found/Math.max(kw.length,1))*110));
-    aiFeedback = aiScore>=70 ? 'Boa resposta! Você cobriu os principais conceitos desta missão.' : aiScore>=40 ? 'Resposta parcial. Tente aprofundar mais o raciocínio.' : 'Resposta muito superficial. Revise o conteúdo e tente novamente.';
+    aiFeedback = aiScore>=70 ? 'Ótimo! Você demonstrou boa compreensão do conteúdo. Continue assim! 🌟' : aiScore>=40 ? 'Bom trabalho! Você mostrou entendimento do tema. Com a prática vai melhorar ainda mais! 💪' : 'Você está no caminho certo! Tente relacionar sua resposta com os exemplos da aula. 🚀';
+    aiScore = Math.max(aiScore, 40);
   }
 
   const cl = aiScore>=70?'sb-hi':aiScore>=40?'sb-mid':'sb-lo';
@@ -1059,7 +1094,7 @@ function endGame() {
 // FIREBASE
 // ─────────────────────────────────────────
 async function saveToFirebase() {
-  if (!fbOk || !player) return;
+  if (!fbOk || !player || player.isTest) return;
   try {
     const ref = db.ref('rankings/' + player.name.replace(/\s/g,'_'));
     const snap = await ref.once('value');
@@ -1071,7 +1106,7 @@ async function saveToFirebase() {
 }
 
 async function saveProgress() {
-  if (!fbOk || !player) return;
+  if (!fbOk || !player || player.isTest) return;
   try {
     await db.ref('progress/' + player.name.replace(/\s/g,'_')).set({ name: player.name, mIdx, score, correct, ts: Date.now() });
   } catch(e) {}
