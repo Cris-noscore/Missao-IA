@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Seed Firebase</title></head>
+<body>
+<pre id="log"></pre>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script>
+const fbConfig = {
+  apiKey: "AIzaSyD3kgy_I-8adWJuJRGJX2dFEqxhkXI_az4",
+  authDomain: "missao-ia-turma-ds.firebaseapp.com",
+  databaseURL: "https://missao-ia-turma-ds-default-rtdb.firebaseio.com",
+  projectId: "missao-ia-turma-ds",
+  storageBucket: "missao-ia-turma-ds.firebasestorage.app",
+  messagingSenderId: "664915248696",
+  appId: "1:664915248696:web:e275758eb17ee2985308cd"
+};
+firebase.initializeApp(fbConfig);
+const db = firebase.database();
+
+const AVATARS = ["🦁","🐺","🦊","🐯","🐻","🦅","🐉","🦋","🌟","⚡","🔥","💎","🎯","🧠","🚀","🌊","🎮","🏆"];
+
+// nota -> score aproximado (nota/10 * pontuação máxima ~25000)
+// correct -> nota/10 * 19 missões
+const students = [
+  { name:"ALLEC AQUINO RODRIGUES",        nota:8.9, avatar:"🦁" },
+  { name:"ANDERSON DE SA ALVES",          nota:9.5, avatar:"🐺" },
+  { name:"ANTONY DAVID DOS SANTOS",       nota:9.5, avatar:"🦊" },
+  { name:"BARBARA MARCONDES SALADO",      nota:10,  avatar:"🐯" },
+  { name:"CAMILLY DIAS SILVA",            nota:8.4, avatar:"🐻" },
+  { name:"EVELLYN DE SOUZA BASTOS",       nota:8.4, avatar:"🦅" },
+  { name:"EVILLY VITORIA DE MOURA REIS",  nota:10,  avatar:"🐉" },
+  { name:"GABRIEL SANTOS DO NASCIMENTO",  nota:null, avatar:"🦋" },
+  { name:"GUSTAVO HENRIQUE PEREIRA PARO", nota:8.4, avatar:"🌟" },
+  { name:"GUSTAVO ROCHA",                 nota:6.3, avatar:"⚡" },
+  { name:"ISABELLE VIEIRA CARVALHO",      nota:8.9, avatar:"🔥" },
+  { name:"LUIZ ANTONIO SOARES GOMES",     nota:9.5, avatar:"💎" },
+  { name:"MIGUEL GUADO GOMES",            nota:7.4, avatar:"🎯" },
+  { name:"NICOLLE RIHANNA LIMA VIEIRA",   nota:7.4, avatar:"🧠" },
+  { name:"PIETRO HENRIQUE DOS SANTOS",    nota:8.9, avatar:"🚀" },
+  { name:"RAYSSA DA SILVA NASCIMENTO",    nota:8.9, avatar:"🌊" },
+  { name:"SAMUEL DE OLIVEIRA TAVOLASSI",  nota:10,  avatar:"🎮" },
+  { name:"YAGO RIKELME SARAIVA COELHO",   nota:null, avatar:"🏆" },
+];
+
+const log = document.getElementById('log');
+
+async function seed() {
+  for (const s of students) {
+    if (!s.nota) {
+      log.textContent += s.name + ' — sem nota, pulando\n';
+      continue;
+    }
+    const correct = Math.round((s.nota / 10) * 19);
+    const score = Math.round((s.nota / 10) * 22000);
+    const key = s.name.replace(/\s/g,'_');
+    await db.ref('rankings/' + key).set({
+      name: s.name,
+      avatar: s.avatar,
+      score: score,
+      correct: correct,
+      missions: 19,
+      nota: s.nota,
+      ts: Date.now()
+    });
+    log.textContent += '✅ ' + s.name + ' — nota ' + s.nota + ' / score ' + score + '\n';
+  }
+  log.textContent += '\n🎉 PRONTO! Todos salvos no Firebase.';
+}
+
+seed();
+</script>
+</body>
+</html>
