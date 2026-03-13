@@ -605,7 +605,7 @@ const STUDENTS = [
   "BARBARA MARCONDES SALADO","CAMILLY DIAS SILVA","EVELLYN DE SOUZA BASTOS",
   "EVILLY VITORIA DE MOURA REIS","GABRIEL SANTOS DO NASCIMENTO","GUSTAVO HENRIQUE PEREIRA PARO",
   "GUSTAVO ROCHA","ISABELLE VIEIRA CARVALHO","LUIZ ANTONIO SOARES GOMES",
-  "MIGUEL GUADO GOMES","NICOLLE RIHANNA LIMA VIEI","RAPIETRO HENRIQUE DOS SANTOS",
+  "MIGUEL GUADO GOMES","NICOLLE RIHANNA LIMA VIEIRA","PIETRO HENRIQUE DOS SANTOS",
   "RAYSSA DA SILVA NASCIMENTO","SAMUEL DE OLIVEIRA TAVOLASSI","YAGO RIKELME SARAIVA COELHO"
 ];
 const AVATARS = ["🦁","🐺","🦊","🐯","🐻","🦅","🐉","🦋","🌟","⚡","🔥","💎","🎯","🧠","🚀","🌊","🎮","🏆"];
@@ -1636,7 +1636,11 @@ async function loadRankingData() {
   try {
     const snap = await db.ref('rankings').once('value');
     const data = [];
-    snap.forEach(c => data.unshift(c.val()));
+    snap.forEach(c => {
+      const v = c.val();
+      if (v && v.name) data.push(v);
+    });
+    data.sort((a,b) => (b.score||0) - (a.score||0));
     rankCache = data;
     console.log('Firebase LIDO:', data.length, 'entradas');
     return rankCache;
