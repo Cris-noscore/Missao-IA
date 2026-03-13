@@ -296,6 +296,18 @@ h1,h2,h3,.mono{font-family:'Orbitron',monospace}
 
 /* MISC */
 .hidden{display:none!important}
+
+/* ── MATCH GAME ── */
+.match-wrap{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:.5rem}
+.match-col{display:flex;flex-direction:column;gap:.6rem}
+.match-col-label{font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:.2rem;font-family:'Orbitron',monospace}
+.match-btn{background:var(--s2);border:1.5px solid var(--border2);border-radius:10px;padding:.65rem .9rem;color:var(--text);font-family:'Exo 2',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;text-align:left;transition:all .2s;line-height:1.3}
+.match-btn:hover{border-color:var(--cyan);background:rgba(0,245,255,0.05)}
+.match-btn.selected{border-color:var(--yellow);background:rgba(255,230,0,0.08);color:var(--yellow)}
+.match-btn.matched-ok{border-color:var(--green);background:rgba(57,255,20,0.08);color:var(--green);cursor:default}
+.match-btn.matched-err{border-color:var(--red);background:rgba(255,45,85,0.08);color:var(--red)}
+.match-btn:disabled{cursor:default;opacity:.7}
+.match-score{text-align:center;margin-top:.75rem;font-family:'Orbitron',monospace;font-size:.85rem;color:var(--cyan)}
 .flex-center{display:flex;align-items:center;justify-content:center}
 .gap-sm{gap:.5rem}
 .mt1{margin-top:.5rem}
@@ -401,6 +413,8 @@ h1,h2,h3,.mono{font-family:'Orbitron',monospace}
   </div>
   <!-- Answers -->
   <div class="answers-wrap hidden" id="answersWrap"></div>
+  <!-- Match -->
+  <div class="match-wrap hidden" id="matchWrap"></div>
   <!-- Open -->
   <div class="open-wrap hidden" id="openWrap">
     <textarea id="openText" placeholder="Digite sua resposta aqui..."></textarea>
@@ -726,6 +740,58 @@ const MISSIONS = [
       "A IA pode automatizar tarefas e até eliminar alguns empregos, mas também cria novas oportunidades e exige novas habilidades"
     ],
     ans:3, pts:200, time:120, diff:"medium"
+  },
+  {
+    id:16, title:"Associe: Tipos de IA",
+    type:"match",
+    q:"Associe cada tipo de IA à sua característica principal:",
+    ctx:"Clique em um item da esquerda e depois no correspondente da direita.",
+    pairs:[
+      {left:"Máquina Reativa",     right:"Não possui memória, só reage a estímulos"},
+      {left:"Memória Limitada",    right:"Aprende com dados recentes e melhora com experiência"},
+      {left:"Teoria da Mente",     right:"Entenderia emoções e intenções humanas"},
+      {left:"IA Autoconsciente",   right:"Teria consciência de si mesma (hipotética)"}
+    ],
+    pts:250, time:120, diff:"medium"
+  },
+  {
+    id:17, title:"Associe: Exemplos Reais",
+    type:"match",
+    q:"Associe cada exemplo ao tipo de IA que representa:",
+    ctx:"Pense em quais IAs existem hoje e quais são apenas teóricas.",
+    pairs:[
+      {left:"Deep Blue (IBM)",         right:"Máquina Reativa"},
+      {left:"Netflix / Spotify",       right:"IA com Memória Limitada"},
+      {left:"Carro autônomo",          right:"IA com Memória Limitada"},
+      {left:"IA com sentimentos",      right:"IA Autoconsciente (hipotética)"}
+    ],
+    pts:250, time:120, diff:"medium"
+  },
+  {
+    id:18, title:"Associe: Conceitos de IA",
+    type:"match",
+    q:"Associe cada conceito à sua definição correta:",
+    ctx:"Revise os conceitos principais da aula antes de responder.",
+    pairs:[
+      {left:"Inteligência Artificial", right:"Área da computação que simula inteligência humana"},
+      {left:"Machine Learning",        right:"Subcampo da IA onde sistemas aprendem com dados"},
+      {left:"Deep Learning",           right:"Subcampo do ML que usa redes neurais profundas"},
+      {left:"IA Fraca",                right:"IA projetada para tarefas específicas sem consciência"}
+    ],
+    pts:250, time:120, diff:"medium"
+  },
+  {
+    id:19, title:"Associe: Etapas do ML",
+    type:"match",
+    q:"Coloque as etapas do Machine Learning na ordem correta associando cada número à etapa:",
+    ctx:"O ML é um ciclo contínuo — cada etapa depende da anterior.",
+    pairs:[
+      {left:"1ª etapa", right:"Coleta de dados"},
+      {left:"2ª etapa", right:"Identificação de padrões"},
+      {left:"3ª etapa", right:"Geração de previsões"},
+      {left:"4ª etapa", right:"Ajuste com feedback"}
+    ],
+    pts:250, time:120, diff:"medium"
   }
 ];
 
@@ -858,6 +924,114 @@ document.getElementById('soundBtn').onclick = function(){
   sound = !sound; this.textContent = sound ? '🔊' : '🔇';
 };
 
+
+// ─────────────────────────────────────────
+// MATCH GAME
+// ─────────────────────────────────────────
+let matchState = { selected: null, side: null, connections: {}, done: 0 };
+
+function loadMatchGame(m) {
+  matchState = { selected: null, side: null, connections: {}, done: 0 };
+  const wrap = document.getElementById('matchWrap');
+
+  // Shuffle right column
+  const rights = [...m.pairs.map(p => p.right)].sort(() => Math.random() - 0.5);
+
+  wrap.innerHTML = `
+    <div class="match-col">
+      <div class="match-col-label">Conceitos</div>
+      ${m.pairs.map((p,i) => `<button class="match-btn" id="ml-${i}" data-side="left" data-idx="${i}" onclick="matchClick(this)">${p.left}</button>`).join('')}
+    </div>
+    <div class="match-col">
+      <div class="match-col-label">Definições</div>
+      ${rights.map((r,i) => `<button class="match-btn" id="mr-${i}" data-side="right" data-val="${r.replace(/"/g,'&quot;')}" onclick="matchClick(this)">${r}</button>`).join('')}
+    </div>
+  `;
+}
+
+function matchClick(btn) {
+  if (answered) return;
+  const side = btn.dataset.side;
+  if (btn.classList.contains('matched-ok')) return;
+
+  if (!matchState.selected) {
+    // First click — select
+    document.querySelectorAll('.match-btn.selected').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    matchState.selected = btn;
+    matchState.side = side;
+    sfx.open();
+    return;
+  }
+
+  // Second click — must be opposite side
+  if (matchState.side === side) {
+    document.querySelectorAll('.match-btn.selected').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    matchState.selected = btn;
+    matchState.side = side;
+    return;
+  }
+
+  // Attempt connection
+  const leftBtn  = side === 'right' ? matchState.selected : btn;
+  const rightBtn = side === 'right' ? btn : matchState.selected;
+  const leftIdx  = parseInt(leftBtn.dataset.idx);
+  const rightVal = rightBtn.dataset.val;
+  const m = MISSIONS[mIdx];
+  const correct = m.pairs[leftIdx].right === rightVal;
+
+  leftBtn.classList.remove('selected');
+  rightBtn.classList.remove('selected');
+
+  if (correct) {
+    leftBtn.classList.add('matched-ok');
+    rightBtn.classList.add('matched-ok');
+    leftBtn.disabled = true; rightBtn.disabled = true;
+    sfx.correct();
+    matchState.connections[leftIdx] = true;
+    matchState.done++;
+    spawnSparks(rightBtn);
+    if (matchState.done === m.pairs.length) finishMatch(true);
+  } else {
+    leftBtn.classList.add('matched-err');
+    rightBtn.classList.add('matched-err');
+    sfx.wrong();
+    setTimeout(() => {
+      leftBtn.classList.remove('matched-err');
+      rightBtn.classList.remove('matched-err');
+    }, 700);
+  }
+
+  matchState.selected = null;
+  matchState.side = null;
+}
+
+function finishMatch(allCorrect) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInt);
+  const m = MISSIONS[mIdx];
+  const correctCount = Object.keys(matchState.connections).length;
+  const total = m.pairs.length;
+  const pct = correctCount / total;
+  const timeBonus = Math.floor(timeLeft * 2);
+  const earned = Math.floor(m.pts * pct) + (pct === 1 ? timeBonus : 0);
+  score += earned;
+  if (pct >= 0.5) { correct++; combo++; } else combo = 0;
+  updateHUD();
+  if (combo >= 2) showCombo();
+  const fb = document.getElementById('feedbackRow');
+  fb.classList.remove('hidden');
+  fb.className = 'feedback-row ' + (pct === 1 ? 'fb-correct' : pct >= 0.5 ? 'fb-mid' : 'fb-wrong');
+  fb.innerHTML = pct === 1
+    ? `✅ Perfeito! Todas as associações corretas! +${earned} pts 🔥`
+    : `✅ ${correctCount}/${total} associações corretas. +${earned} pts`;
+  gameLog.push({ mIdx, correct: pct >= 0.5, pts: earned, time: m.time - timeLeft });
+  saveProgress();
+  setTimeout(nextMission, 2000);
+}
+
 // ─────────────────────────────────────────
 // GAME ENGINE
 // ─────────────────────────────────────────
@@ -893,6 +1067,9 @@ function loadMission() {
   document.getElementById('submitOpenBtn').innerHTML = '🤖 Enviar para IA avaliar';
   fb.classList.add('hidden'); fb.innerHTML = '';
 
+  const mw = document.getElementById('matchWrap');
+  mw.classList.add('hidden');
+
   if (m.type === 'multi') {
     aw.classList.remove('hidden');
     aw.innerHTML = '';
@@ -903,6 +1080,9 @@ function loadMission() {
       btn.onclick = () => pickAnswer(i, btn);
       aw.appendChild(btn);
     });
+  } else if (m.type === 'match') {
+    mw.classList.remove('hidden');
+    loadMatchGame(m);
   } else {
     ow.classList.remove('hidden');
     sfx.open();
