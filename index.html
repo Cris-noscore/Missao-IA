@@ -1607,15 +1607,21 @@ function endGame() {
 // ─────────────────────────────────────────
 async function saveToFirebase() {
   if (!fbOk || !player || player.isTest) return;
+  const key = player.name.replace(/\s/g,'_');
+  const ref = db.ref('rankings/' + key);
+  const payload = { name: player.name, avatar: player.avatar, score, correct, missions: MISSIONS.length, ts: Date.now() };
   try {
-    const ref = db.ref('rankings/' + player.name.replace(/\s/g,'_'));
-    const snap = await ref.once('value');
-    const prev = snap.val();
-    if (!prev || score > (prev.score || 0)) {
-      await ref.set({ name: player.name, avatar: player.avatar, score, correct, missions: MISSIONS.length, ts: Date.now() });
-      console.log('Firebase SALVO:', player.name, score);
-    }
-  } catch(e) { console.error('Firebase SAVE ERRO:', e); }
+    await ref.transaction(prev => {
+      if (!prev || score > (prev.score || 0)) return payload;
+      return undefined;
+    });
+    console.log('Firebase SALVO:', player.name, score);
+  } catch(e) {
+    try {
+      await ref.set(payload);
+      console.log('Firebase SALVO (fallback):', player.name, score);
+    } catch(e2) { console.error('Firebase SAVE ERRO:', e2); }
+  }
 }
 
 async function saveProgress() {
