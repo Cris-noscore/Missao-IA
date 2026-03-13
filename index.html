@@ -324,6 +324,22 @@ h1,h2,h3,.mono{font-family:'Orbitron',monospace}
 .chip-yellow{background:rgba(255,230,0,.1);color:var(--yellow)}
 .chip-red{background:rgba(255,45,85,.1);color:var(--red)}
 @media(max-width:500px){.intro-title{font-size:2rem}.hud{gap:.5rem}.hud-stat .hs-v{font-size:.9rem}.mission-q{font-size:1rem}}
+
+/* ── PASSWORD MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-box{background:var(--s2);border:1.5px solid var(--border2);border-radius:18px;padding:2.5rem 2rem;width:90%;max-width:380px;text-align:center;box-shadow:0 0 40px rgba(0,245,255,.15)}
+.modal-box h3{font-family:'Orbitron',monospace;font-size:1.2rem;margin-bottom:.5rem;color:var(--cyan)}
+.modal-box p{font-size:.85rem;color:var(--text2);margin-bottom:1.5rem}
+.modal-input{width:100%;background:var(--s3);border:1.5px solid var(--border2);border-radius:10px;padding:.75rem 1rem;color:var(--text);font-size:1.1rem;font-family:'Orbitron',monospace;text-align:center;letter-spacing:.3rem;margin-bottom:1rem;outline:none}
+.modal-input:focus{border-color:var(--cyan)}
+.modal-err{color:var(--red);font-size:.8rem;margin-bottom:.75rem;min-height:1.2rem}
+
+/* ── INSTRUCOES SCREEN ── */
+#s-instrucoes{padding:5rem 1rem 3rem;max-width:700px;margin:0 auto;width:100%}
+.inst-card{background:var(--s2);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1rem}
+.inst-card h3{font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan);margin-bottom:.75rem}
+.inst-item{display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.6rem;font-size:.88rem;color:var(--text2);line-height:1.5}
+.inst-num{background:var(--cyan);color:#000;font-weight:900;font-size:.75rem;font-family:'Orbitron',monospace;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
 </style>
 </head>
 <body>
@@ -338,6 +354,20 @@ h1,h2,h3,.mono{font-family:'Orbitron',monospace}
   <div class="ai-bubble" id="aiBubble">Pronto para a missão? Analise com calma cada alternativa!</div>
 </div>
 
+<!-- MODAL SENHA PROFESSOR -->
+<div class="modal-overlay hidden" id="profModal">
+  <div class="modal-box">
+    <h3>🔐 ÁREA DO PROFESSOR</h3>
+    <p>Digite a senha para acessar o dashboard</p>
+    <input class="modal-input" type="password" id="profPassInput" maxlength="10" placeholder="••••••" onkeydown="if(event.key==='Enter')checkProfPass()">
+    <div class="modal-err" id="profPassErr"></div>
+    <div style="display:flex;gap:.75rem;justify-content:center">
+      <button class="btn btn-solid" onclick="checkProfPass()">✅ Entrar</button>
+      <button class="btn btn-cyan" onclick="closeProfModal()">✖ Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOP BAR -->
 <nav class="topbar">
   <div class="tb-logo">MISSÃO<span> IA</span></div>
@@ -345,7 +375,7 @@ h1,h2,h3,.mono{font-family:'Orbitron',monospace}
     <span class="live-dot hidden" id="liveIndicator">AO VIVO</span>
     <span class="tb-player" id="tbPlayer"></span>
     <div class="sound-toggle" id="soundBtn" title="Sons">🔊</div>
-    <button class="btn btn-cyan btn-sm" onclick="goScreen('s-prof')">👨‍🏫 Professor</button>
+    <button class="btn btn-cyan btn-sm" onclick="openProfModal()">👨‍🏫 Professor</button>
   </div>
 </nav>
 
@@ -360,7 +390,7 @@ h1,h2,h3,.mono{font-family:'Orbitron',monospace}
     <p class="intro-sub">Explore o universo da <strong>Inteligência Artificial</strong> em sistemas de<br>recomendação através de 12 missões interativas. Compete com sua turma em tempo real.</p>
     <div class="mission-preview" id="missionPreview"></div>
     <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:2rem">
-      <button class="btn btn-solid" style="font-size:1rem;padding:.85rem 2.5rem" onclick="goScreen('s-login')">🚀 Iniciar Missões</button>
+      <button class="btn btn-solid" style="font-size:1rem;padding:.85rem 2.5rem" onclick="goScreen('s-instrucoes')">🚀 Iniciar Missões</button>
       <button class="btn btn-cyan" style="font-size:1rem;padding:.85rem 2rem" onclick="goScreen('s-rank')">🏆 Ver Ranking</button>
     </div>
     <p style="font-size:.75rem;color:var(--text3);margin-top:2rem">Tema: IA em Sistemas de Recomendação • 12 missões • Avaliação por IA</p>
@@ -437,14 +467,55 @@ h1,h2,h3,.mono{font-family:'Orbitron',monospace}
     <p class="result-msg" id="resMsg">Missão concluída!</p>
     <div class="res-stats">
       <div class="rs-item"><div class="rs-val text-cyan" id="resPts">0</div><div class="rs-lbl">Pontos</div></div>
-      <div class="rs-item"><div class="rs-val text-green" id="resAcc">0/12</div><div class="rs-lbl">Acertos</div></div>
+      <div class="rs-item"><div class="rs-val text-green" id="resAcc">0/19</div><div class="rs-lbl">Acertos</div></div>
       <div class="rs-item"><div class="rs-val text-purple" id="resRank">#?</div><div class="rs-lbl">Posição</div></div>
     </div>
+    <div style="background:var(--s2);border:1.5px solid var(--border2);border-radius:14px;padding:1rem 1.5rem;margin-bottom:1.5rem;text-align:center">
+      <div style="font-size:.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:.3rem">Nota Final</div>
+      <div style="font-family:'Orbitron',monospace;font-size:3rem;font-weight:900;line-height:1" id="resNota">0.0</div>
+      <div style="font-size:.75rem;color:var(--text2);margin-top:.25rem">de 10.0 pontos</div>
+    </div>
     <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center">
+      <button class="btn btn-solid" onclick="exportPDF()">📄 Exportar PDF</button>
       <button class="btn btn-solid" onclick="goScreen('s-rank')">🏆 Ver Ranking</button>
       <button class="btn btn-cyan" onclick="goScreen('s-login')">🔄 Jogar novamente</button>
-      <button class="btn btn-cyan" onclick="goScreen('s-prof')">📊 Dashboard</button>
     </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TELA: INSTRUÇÕES
+══════════════════════════════════════════ -->
+<div class="screen" id="s-instrucoes">
+  <div style="text-align:center;margin-bottom:1.5rem">
+    <h2 style="font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900">📋 COMO JOGAR</h2>
+    <p style="color:var(--text2);font-size:.9rem">Leia com atenção antes de começar!</p>
+  </div>
+  <div class="inst-card">
+    <h3>🎯 Objetivo</h3>
+    <div class="inst-item"><div class="inst-num">1</div><span>Responda as <strong>19 missões</strong> sobre Inteligência Artificial com base no que você aprendeu em aula.</span></div>
+    <div class="inst-item"><div class="inst-num">2</div><span>Cada acerto vale pontos — quanto mais rápido você responder, mais pontos ganha!</span></div>
+    <div class="inst-item"><div class="inst-num">3</div><span>Acertos consecutivos ativam o <strong style="color:var(--yellow)">COMBO</strong> e multiplicam seus pontos. 🔥</span></div>
+  </div>
+  <div class="inst-card">
+    <h3>📝 Tipos de Questão</h3>
+    <div class="inst-item"><span style="font-size:1.1rem">🔘</span><span><strong>Múltipla escolha</strong> — escolha a alternativa correta entre A, B, C e D.</span></div>
+    <div class="inst-item"><span style="font-size:1.1rem">🔗</span><span><strong>Associação</strong> — clique em um conceito da esquerda e depois na definição correta da direita.</span></div>
+  </div>
+  <div class="inst-card">
+    <h3>⏱ Tempo e Pontuação</h3>
+    <div class="inst-item"><span style="font-size:1.1rem">⚡</span><span>Cada questão tem <strong>2 minutos</strong> para ser respondida. O timer fica vermelho nos últimos 5 segundos!</span></div>
+    <div class="inst-item"><span style="font-size:1.1rem">📊</span><span>Sua pontuação final será convertida em uma <strong style="color:var(--cyan)">nota de 0 a 10</strong> ao final.</span></div>
+    <div class="inst-item"><span style="font-size:1.1rem">🏆</span><span>Sua melhor pontuação é salva no <strong>ranking da turma</strong> em tempo real.</span></div>
+  </div>
+  <div class="inst-card" style="border-color:rgba(255,230,0,0.3);background:rgba(255,230,0,0.03)">
+    <h3 style="color:var(--yellow)">⚠️ Atenção</h3>
+    <div class="inst-item"><span style="font-size:1.1rem">🚫</span><span>Não recarregue a página durante o jogo — seu progresso será perdido!</span></div>
+    <div class="inst-item"><span style="font-size:1.1rem">📵</span><span>Use apenas o conteúdo da aula. Consultar outros materiais não é permitido.</span></div>
+  </div>
+  <div style="display:flex;gap:1rem;justify-content:center;margin-top:1rem;flex-wrap:wrap">
+    <button class="btn btn-solid" style="font-size:1rem;padding:.85rem 2.5rem" onclick="goScreen('s-login')">🚀 Estou pronto! Começar</button>
+    <button class="btn btn-cyan" onclick="goScreen('s-intro')">← Voltar</button>
   </div>
 </div>
 
@@ -924,6 +995,141 @@ document.getElementById('soundBtn').onclick = function(){
   sound = !sound; this.textContent = sound ? '🔊' : '🔇';
 };
 
+// ─────────────────────────────────────────
+// SENHA PROFESSOR
+// ─────────────────────────────────────────
+const PROF_PASS = '923052';
+function openProfModal() {
+  document.getElementById('profPassInput').value = '';
+  document.getElementById('profPassErr').textContent = '';
+  document.getElementById('profModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('profPassInput').focus(), 100);
+}
+function closeProfModal() {
+  document.getElementById('profModal').classList.add('hidden');
+}
+function checkProfPass() {
+  const val = document.getElementById('profPassInput').value.trim();
+  if (val === PROF_PASS) {
+    closeProfModal();
+    goScreen('s-prof');
+  } else {
+    document.getElementById('profPassErr').textContent = '❌ Senha incorreta. Tente novamente.';
+    document.getElementById('profPassInput').value = '';
+    document.getElementById('profPassInput').focus();
+  }
+}
+// Close modal clicking outside
+document.getElementById('profModal').addEventListener('click', function(e){
+  if (e.target === this) closeProfModal();
+});
+
+// ─────────────────────────────────────────
+// EXPORTAR PDF
+// ─────────────────────────────────────────
+function exportPDF() {
+  if (!player) return;
+  const nota = parseFloat(document.getElementById('resNota').textContent) || 0;
+  const acc = correct;
+  const total = MISSIONS.length;
+  const pct = Math.round((acc/total)*100);
+  const grade = document.getElementById('resGrade').textContent;
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('pt-BR');
+  const timeStr = now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Resultado - ${player.name}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Exo 2',sans-serif;background:#fff;color:#1a1a2e;padding:40px;max-width:700px;margin:0 auto}
+  .header{text-align:center;border-bottom:3px solid #00c4cc;padding-bottom:20px;margin-bottom:30px}
+  .logo{font-size:2rem;font-weight:900;color:#00c4cc;letter-spacing:2px;font-family:monospace}
+  .subtitle{font-size:.9rem;color:#666;margin-top:4px}
+  .student-box{background:#f0fafb;border:2px solid #00c4cc;border-radius:12px;padding:20px;margin-bottom:24px;display:flex;align-items:center;gap:16px}
+  .student-av{font-size:2.5rem}
+  .student-name{font-size:1.3rem;font-weight:700;color:#1a1a2e}
+  .student-meta{font-size:.85rem;color:#666;margin-top:3px}
+  .nota-box{text-align:center;background:linear-gradient(135deg,#00c4cc,#0f172a);border-radius:16px;padding:24px;margin-bottom:24px;color:#fff}
+  .nota-label{font-size:.8rem;text-transform:uppercase;letter-spacing:2px;opacity:.8;margin-bottom:6px}
+  .nota-value{font-size:4rem;font-weight:900;font-family:monospace;line-height:1}
+  .nota-max{font-size:1rem;opacity:.7;margin-top:4px}
+  .nota-grade{display:inline-block;background:rgba(255,255,255,.15);border-radius:8px;padding:4px 16px;margin-top:8px;font-size:1.2rem;font-weight:700}
+  .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+  .stat-item{background:#f8f9fa;border-radius:10px;padding:14px;text-align:center;border:1px solid #e0e0e0}
+  .stat-val{font-size:1.6rem;font-weight:900;color:#00c4cc;font-family:monospace}
+  .stat-lbl{font-size:.72rem;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+  .missions-table{width:100%;border-collapse:collapse;margin-bottom:24px}
+  .missions-table th{background:#0f172a;color:#fff;padding:10px 12px;text-align:left;font-size:.8rem;text-transform:uppercase;letter-spacing:.5px}
+  .missions-table td{padding:9px 12px;border-bottom:1px solid #eee;font-size:.85rem}
+  .missions-table tr:nth-child(even) td{background:#f8f9fa}
+  .badge-ok{display:inline-block;background:#d4edda;color:#155724;border-radius:20px;padding:2px 10px;font-size:.75rem;font-weight:700}
+  .badge-err{display:inline-block;background:#f8d7da;color:#721c24;border-radius:20px;padding:2px 10px;font-size:.75rem;font-weight:700}
+  .badge-skip{display:inline-block;background:#fff3cd;color:#856404;border-radius:20px;padding:2px 10px;font-size:.75rem;font-weight:700}
+  .footer{text-align:center;font-size:.75rem;color:#999;border-top:1px solid #eee;padding-top:16px;margin-top:8px}
+  @media print{body{padding:20px}.no-print{display:none}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">🤖 MISSÃO IA</div>
+  <div class="subtitle">Plataforma Educacional Gamificada — Conceitos Iniciais de IA</div>
+</div>
+
+<div class="student-box">
+  <div class="student-av">${player.avatar}</div>
+  <div>
+    <div class="student-name">${player.name}</div>
+    <div class="student-meta">📅 ${dateStr} às ${timeStr}</div>
+  </div>
+</div>
+
+<div class="nota-box">
+  <div class="nota-label">Nota Final</div>
+  <div class="nota-value">${nota.toFixed(1)}</div>
+  <div class="nota-max">de 10,0 pontos</div>
+  <div class="nota-grade">${grade}</div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-item"><div class="stat-val">${score.toLocaleString()}</div><div class="stat-lbl">Pontos</div></div>
+  <div class="stat-item"><div class="stat-val">${acc}/${total}</div><div class="stat-lbl">Acertos</div></div>
+  <div class="stat-item"><div class="stat-val">${pct}%</div><div class="stat-lbl">Aproveitamento</div></div>
+</div>
+
+<table class="missions-table">
+  <thead><tr><th>#</th><th>Missão</th><th>Tipo</th><th>Resultado</th><th>Pts</th></tr></thead>
+  <tbody>
+    ${gameLog.map((l,i) => {
+      const m = MISSIONS[l.mIdx] || MISSIONS[i] || {};
+      const tipo = m.type === 'match' ? 'Associação' : 'Múltipla Escolha';
+      const res = l.correct
+        ? '<span class="badge-ok">✓ Acertou</span>'
+        : l.pts === 0 && l.time === m.time
+          ? '<span class="badge-skip">⏱ Tempo</span>'
+          : '<span class="badge-err">✗ Errou</span>';
+      return `<tr><td>${(l.mIdx||i)+1}</td><td>${m.title||'Missão '+(i+1)}</td><td>${tipo}</td><td>${res}</td><td>+${l.pts||0}</td></tr>`;
+    }).join('')}
+  </tbody>
+</table>
+
+<div class="footer">
+  Documento gerado automaticamente pela plataforma MISSÃO IA • ${dateStr}<br>
+  Professor: use Ctrl+P para imprimir ou salvar como PDF
+</div>
+
+<div class="no-print" style="text-align:center;margin-top:20px">
+  <button onclick="window.print()" style="background:#00c4cc;color:#000;border:none;padding:10px 28px;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>
+</div>
+</body></html>`);
+  win.document.close();
+}
+
 
 // ─────────────────────────────────────────
 // MATCH GAME
@@ -1287,6 +1493,14 @@ function endGame() {
   else if (pct >= .75) { grade='B+'; gClass='gr-b'; icon='🥇'; msg='Ótimo desempenho! Quase perfeito nas missões!'; }
   else if (pct >= .58) { grade='C+'; gClass='gr-c'; icon='🥈'; msg='Bom trabalho! Continue explorando o universo da IA.'; }
   else { grade='D'; gClass='gr-d'; icon='📚'; msg='Continue estudando! Cada missão é um aprendizado.'; }
+
+  // Nota 0-10 baseada em acertos
+  const nota = parseFloat(((correct / MISSIONS.length) * 10).toFixed(1));
+  const notaEl = document.getElementById('resNota');
+  if (notaEl) {
+    notaEl.textContent = nota.toFixed(1);
+    notaEl.style.color = nota >= 7 ? 'var(--green)' : nota >= 5 ? 'var(--yellow)' : 'var(--red)';
+  }
 
   document.getElementById('resIcon').textContent = icon;
   document.getElementById('resGrade').textContent = grade;
