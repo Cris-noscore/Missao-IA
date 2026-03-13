@@ -663,44 +663,69 @@ const MISSIONS = [
     ans:2, pts:200, time:120, diff:"medium"
   },
   {
-    id:11, title:"Explique IA Fraca com exemplos",
-    type:"open",
-    q:"O que é IA Fraca (Narrow AI)? Cite pelo menos 2 características e 2 exemplos do dia a dia. Por que toda IA atual é considerada IA Fraca?",
-    ctx:"Use os conceitos da aula: tarefa específica, sem consciência, sem transferência de conhecimento...",
-    pts:300, time:600, diff:"hard",
-    kw:["fraca","narrow","específica","tarefa","consciência","siri","alexa","netflix","spotify","reconhecimento","recomendação","assistente","não entende","não transfere","atual","limitada","projetada"]
+    id:11, title:"IA com Teoria da Mente",
+    type:"multi",
+    q:"A IA com Teoria da Mente seria capaz de entender emoções e intenções humanas. Qual é a situação atual desse tipo de IA?",
+    ctx:"Lembre-se: dos 4 tipos de IA por capacidade, nem todos existem ainda.",
+    opts:[
+      "Já existe e é usada em assistentes virtuais como Alexa e Siri",
+      "Existe apenas em laboratórios militares secretos",
+      "Ainda está em desenvolvimento e não existe de forma plena",
+      "Foi desenvolvida pela IBM junto com o Deep Blue"
+    ],
+    ans:2, pts:150, time:120, diff:"medium"
   },
   {
-    id:12, title:"4 tipos de IA por capacidade",
-    type:"open",
-    q:"Descreva os 4 tipos de IA classificados por capacidade (Máquinas Reativas, Memória Limitada, Teoria da Mente e Autoconsciente), explicando as características de cada um e indicando quais existem atualmente.",
-    ctx:"Organize sua resposta por tipo. Lembre-se: apenas 2 dos 4 tipos existem de fato hoje!",
-    pts:400, time:600, diff:"hard",
-    kw:["reativa","memória","teoria da mente","autoconsciente","deep blue","carro autônomo","emoção","intenção","consciência","hipotética","desenvolvimento","existe","não existe","aprende","não aprende","estímulo","netflix","spotify"]
+    id:12, title:"IA Autoconsciente",
+    type:"multi",
+    q:"A IA Autoconsciente, que teria consciência de si mesma e capacidade de refletir, é considerada:",
+    ctx:"Pense: qual dos 4 tipos de IA ainda é completamente hipotético?",
+    opts:[
+      "Uma realidade presente no ChatGPT e outros modelos avançados",
+      "Algo hipotético que ainda não existe na prática",
+      "Um tipo de IA já proibido por leis internacionais",
+      "O mesmo que IA com Memória Limitada, só com outro nome"
+    ],
+    ans:1, pts:150, time:120, diff:"medium"
   },
   {
-    id:13, title:"Como funciona o Machine Learning",
-    type:"open",
-    q:"Explique com suas palavras como funciona o Machine Learning. Quais são suas etapas? Como ele se relaciona com a Inteligência Artificial e com o Deep Learning?",
-    ctx:"ML é um subcampo da IA — tente explicar a relação entre os três e o ciclo de aprendizado contínuo.",
-    pts:350, time:600, diff:"hard",
-    kw:["dados","padrão","previsão","feedback","ajuste","treinamento","aprende","subcampo","ia","algoritmo","melhora","repete","contínuo","identificação","coleta","experiência","deep learning","redes neurais"]
+    id:13, title:"ML, DL e IA: a relação",
+    type:"multi",
+    q:"Qual das alternativas representa corretamente a relação entre Inteligência Artificial, Machine Learning e Deep Learning?",
+    ctx:"Pense em caixas aninhadas: qual está dentro de qual?",
+    opts:[
+      "São três áreas completamente independentes e separadas",
+      "Deep Learning contém o Machine Learning, que por sua vez contém a IA",
+      "IA é o campo maior, ML é subcampo da IA, e Deep Learning é subcampo do ML",
+      "Machine Learning e Deep Learning são exatamente a mesma coisa"
+    ],
+    ans:2, pts:200, time:120, diff:"medium"
   },
   {
-    id:14, title:"Limitações da IA atual",
-    type:"open",
-    q:"Quais são as principais limitações da Inteligência Artificial atual? Escolha pelo menos 3 e explique por que cada uma representa um desafio real para o desenvolvimento da tecnologia.",
-    ctx:"Pense nas limitações vistas na aula: necessidade de muitos dados, viés, compreensão real, memória...",
-    pts:350, time:600, diff:"hard",
-    kw:["dados","viés","não entende","memória limitada","reproduz","preconceito","precisa de muitos dados","não compreende","limitação","desafio","problema","tendencioso","erro","caixa preta","não transfere","tarefa específica"]
+    id:14, title:"Limitação real da IA",
+    type:"multi",
+    q:"Qual das opções representa uma limitação REAL da Inteligência Artificial atual, conforme visto em aula?",
+    ctx:"Nenhuma tecnologia é perfeita — a IA tem restrições importantes que precisamos conhecer.",
+    opts:[
+      "A IA pode reproduzir vieses e preconceitos presentes nos dados de treinamento",
+      "A IA não consegue processar nenhum tipo de imagem ou texto",
+      "A IA só funciona conectada à internet de alta velocidade",
+      "A IA é incapaz de aprender com novos dados após ser criada"
+    ],
+    ans:0, pts:200, time:120, diff:"medium"
   },
   {
-    id:15, title:"IA transforma a sociedade?",
-    type:"open",
-    q:"Com base no que você aprendeu sobre os tipos de IA, Machine Learning e os impactos éticos, você acredita que a IA vai transformar positivamente a sociedade ou representa mais riscos? Justifique com argumentos baseados no conteúdo da aula.",
-    ctx:"Não há resposta certa ou errada — a IA avalia a qualidade do raciocínio e uso dos conceitos aprendidos.",
-    pts:500, time:600, diff:"hard",
-    kw:["benefício","risco","viés","privacidade","mercado de trabalho","automação","ética","responsabilidade","transformação","positivo","negativo","desafio","regulamentação","lgpd","decisão","impacto","sociedade","educação","saúde","consciência"]
+    id:15, title:"Impacto da IA na sociedade",
+    type:"multi",
+    q:"Sobre o impacto da IA no mercado de trabalho e na sociedade, qual afirmação está mais alinhada com o conteúdo da aula?",
+    ctx:"A IA traz mudanças — mas nem tudo é negativo. Pense nos dois lados.",
+    opts:[
+      "A IA vai eliminar todos os empregos humanos nos próximos 5 anos",
+      "A IA não tem nenhum impacto no mercado de trabalho atual",
+      "Somente profissionais de TI precisam se preocupar com a IA",
+      "A IA pode automatizar tarefas e até eliminar alguns empregos, mas também cria novas oportunidades e exige novas habilidades"
+    ],
+    ans:3, pts:200, time:120, diff:"medium"
   }
 ];
 
