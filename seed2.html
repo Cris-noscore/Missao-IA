@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Seed v2</title></head>
+<body>
+<h2>Salvando alunos...</h2>
+<pre id="log"></pre>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyD3kgy_I-8adWJuJRGJX2dFEqxhkXI_az4",
+  authDomain: "missao-ia-turma-ds.firebaseapp.com",
+  databaseURL: "https://missao-ia-turma-ds-default-rtdb.firebaseio.com",
+  projectId: "missao-ia-turma-ds",
+  appId: "1:664915248696:web:e275758eb17ee2985308cd"
+});
+const db = firebase.database();
+const log = document.getElementById('log');
+
+const students = [
+  { name:"ALLEC AQUINO RODRIGUES",        nota:8.9,  avatar:"🦁" },
+  { name:"ANDERSON DE SA ALVES",          nota:9.5,  avatar:"🐺" },
+  { name:"ANTONY DAVID DOS SANTOS",       nota:9.5,  avatar:"🦊" },
+  { name:"BARBARA MARCONDES SALADO",      nota:10.0, avatar:"🐯" },
+  { name:"CAMILLY DIAS SILVA",            nota:8.4,  avatar:"🐻" },
+  { name:"EVELLYN DE SOUZA BASTOS",       nota:8.4,  avatar:"🦅" },
+  { name:"EVILLY VITORIA DE MOURA REIS",  nota:10.0, avatar:"🐉" },
+  { name:"GUSTAVO HENRIQUE PEREIRA PARO", nota:8.4,  avatar:"🌟" },
+  { name:"GUSTAVO ROCHA",                 nota:6.3,  avatar:"⚡" },
+  { name:"ISABELLE VIEIRA CARVALHO",      nota:8.9,  avatar:"🔥" },
+  { name:"LUIZ ANTONIO SOARES GOMES",     nota:9.5,  avatar:"💎" },
+  { name:"MIGUEL GUADO GOMES",            nota:7.4,  avatar:"🎯" },
+  { name:"NICOLLE RIHANNA LIMA VIEIRA",   nota:7.4,  avatar:"🧠" },
+  { name:"PIETRO HENRIQUE DOS SANTOS",    nota:8.9,  avatar:"🚀" },
+  { name:"RAYSSA DA SILVA NASCIMENTO",    nota:8.9,  avatar:"🌊" },
+  { name:"SAMUEL DE OLIVEIRA TAVOLASSI",  nota:10.0, avatar:"🎮" },
+];
+
+async function seed() {
+  // Primeiro limpa tudo
+  log.textContent += 'Limpando rankings antigos...\n';
+  await db.ref('rankings').remove();
+  log.textContent += 'Limpou! Salvando alunos...\n\n';
+
+  for (const s of students) {
+    const key = s.name.replace(/\s/g, '_');
+    const correct = Math.round((s.nota / 10) * 19);
+    const score = Math.round((s.nota / 10) * 22000);
+    await db.ref('rankings/' + key).set({
+      name: s.name,
+      avatar: s.avatar,
+      score: score,
+      correct: correct,
+      missions: 19,
+      nota: s.nota,
+      ts: Date.now()
+    });
+    log.textContent += '✅ ' + s.name + ' — nota ' + s.nota + '\n';
+  }
+  log.textContent += '\n🎉 PRONTO! ' + students.length + ' alunos salvos.';
+}
+
+seed().catch(e => log.textContent += '\nERRO: ' + e.message);
+</script>
+</body>
+</html>
