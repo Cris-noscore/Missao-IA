@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Teste Ranking</title></head>
+<body>
+<h2>Dados do Firebase - Rankings</h2>
+<pre id="log">Carregando...</pre>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyD3kgy_I-8adWJuJRGJX2dFEqxhkXI_az4",
+  authDomain: "missao-ia-turma-ds.firebaseapp.com",
+  databaseURL: "https://missao-ia-turma-ds-default-rtdb.firebaseio.com",
+  projectId: "missao-ia-turma-ds",
+  appId: "1:664915248696:web:e275758eb17ee2985308cd"
+});
+const db = firebase.database();
+const log = document.getElementById('log');
+
+db.ref('rankings').once('value').then(snap => {
+  const data = [];
+  snap.forEach(c => data.push(c.val()));
+  log.textContent = 'Total: ' + data.length + ' registros\n\n';
+  data.forEach((d,i) => {
+    log.textContent += (i+1) + '. ' + d.name + ' — score: ' + d.score + ' — nota: ' + (d.nota||'?') + '\n';
+  });
+}).catch(e => {
+  log.textContent = 'ERRO: ' + e.message;
+});
+</script>
+</body>
+</html>
