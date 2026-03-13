@@ -1164,32 +1164,56 @@ function loadMatchGame(m) {
     </div>`;
 }
 
+// Cores distintas para cada par associado
+const PAIR_COLORS = [
+  { border:'#00f5ff', bg:'rgba(0,245,255,0.10)', text:'#00f5ff' },   // ciano
+  { border:'#a855f7', bg:'rgba(168,85,247,0.10)', text:'#c084fc' },  // roxo
+  { border:'#ffe600', bg:'rgba(255,230,0,0.10)',  text:'#ffe600' },  // amarelo
+  { border:'#39ff14', bg:'rgba(57,255,20,0.10)',  text:'#39ff14' },  // verde
+];
+
 function msRender() {
-  // Re-render all button states based on MS.pairs and MS.sel
   const m = MISSIONS[mIdx];
   // Build reverse map: rightIdx -> leftIdx
   const rev = {};
   Object.entries(MS.pairs).forEach(([li, ri]) => rev[ri] = parseInt(li));
 
+  // Assign a stable color index to each left item that has a pair
+  // Use the left index itself (0-3) to pick color — always consistent
   m.pairs.forEach((p, li) => {
     const lb = document.getElementById('ml' + li);
     if (!lb) return;
     const pairedRi = MS.pairs[li];
     const isSelected = MS.sel === li;
-    lb.className = 'match-btn' + (isSelected ? ' selected' : pairedRi !== undefined ? ' paired' : '');
     lb.style.cssText = '';
-    if (isSelected) { lb.style.borderColor='var(--yellow)'; lb.style.background='rgba(255,230,0,0.08)'; lb.style.color='var(--yellow)'; }
-    else if (pairedRi !== undefined) { lb.style.borderColor='var(--cyan)'; lb.style.background='rgba(0,245,255,0.07)'; lb.style.color='var(--cyan)'; }
-    lb.textContent = p.left + (pairedRi !== undefined ? ' →' : '');
+    if (isSelected) {
+      // Selected but not yet paired — pulsing yellow
+      lb.style.borderColor = '#ffe600';
+      lb.style.background  = 'rgba(255,230,0,0.12)';
+      lb.style.color       = '#ffe600';
+      lb.style.boxShadow   = '0 0 12px rgba(255,230,0,0.3)';
+    } else if (pairedRi !== undefined) {
+      const c = PAIR_COLORS[li % PAIR_COLORS.length];
+      lb.style.borderColor = c.border;
+      lb.style.background  = c.bg;
+      lb.style.color       = c.text;
+      lb.style.boxShadow   = '0 0 8px ' + c.bg;
+    }
+    lb.textContent = p.left + (isSelected ? ' ◀' : pairedRi !== undefined ? ' ⟷' : '');
   });
 
   MS_rights.forEach((r, ri) => {
     const rb = document.getElementById('mr' + ri);
     if (!rb) return;
     const pairedLi = rev[ri];
-    rb.className = 'match-btn' + (pairedLi !== undefined ? ' paired' : '');
     rb.style.cssText = '';
-    if (pairedLi !== undefined) { rb.style.borderColor='var(--cyan)'; rb.style.background='rgba(0,245,255,0.07)'; rb.style.color='var(--cyan)'; }
+    if (pairedLi !== undefined) {
+      const c = PAIR_COLORS[pairedLi % PAIR_COLORS.length];
+      rb.style.borderColor = c.border;
+      rb.style.background  = c.bg;
+      rb.style.color       = c.text;
+      rb.style.boxShadow   = '0 0 8px ' + c.bg;
+    }
     rb.textContent = r;
   });
 
