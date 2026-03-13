@@ -1132,143 +1132,147 @@ function exportPDF() {
 
 
 // ─────────────────────────────────────────
-// MATCH GAME — Confirmar depois de associar tudo
+// MATCH GAME — simples e robusto
+// Estado: selectedLeft (idx ou null), userPairs {leftIdx: rightIdx}
 // ─────────────────────────────────────────
-let matchState = { selectedLeft: null, pairs: {}, rightUsed: {} };
+let MS = { sel: null, pairs: {} }; // pairs: leftIdx -> rightIdx (posição embaralhada)
+let MS_rights = []; // valores da coluna direita embaralhados
 
 function loadMatchGame(m) {
-  matchState = { selectedLeft: null, pairs: {}, rightUsed: {} };
+  MS = { sel: null, pairs: {} };
+  MS_rights = [...m.pairs.map(p => p.right)].sort(() => Math.random() - 0.5);
   const wrap = document.getElementById('matchWrap');
-
-  // Shuffle right column
-  const rights = [...m.pairs.map(p => p.right)].sort(() => Math.random() - 0.5);
-
   wrap.innerHTML = `
     <div style="grid-column:1/-1;background:rgba(0,245,255,0.05);border:1px solid rgba(0,245,255,0.2);border-radius:10px;padding:.65rem 1rem;font-size:.82rem;color:var(--text2);line-height:1.5">
       💡 <strong style="color:var(--cyan)">Como funciona:</strong>
-      Clique em um item da coluna <strong>esquerda</strong>, depois clique no item correspondente na coluna <strong>direita</strong> para fazer a associação.
-      Associe todos os 4 pares e clique em <strong style="color:var(--yellow)">Confirmar</strong> quando terminar.
+      Clique num conceito da esquerda (fica <strong style="color:var(--yellow)">amarelo</strong>),
+      depois clique na definição correta da direita para associar.
+      Você pode <strong>trocar</strong> qualquer associação antes de confirmar.
+      Quando associar todos os ${m.pairs.length} pares, clique em <strong style="color:var(--yellow)">Confirmar</strong>.
     </div>
     <div class="match-col">
       <div class="match-col-label">📌 Conceitos</div>
-      ${m.pairs.map((p,i) => `<button class="match-btn" id="ml-${i}" data-idx="${i}" onclick="matchClickLeft(this,${i})">${p.left}</button>`).join('')}
+      ${m.pairs.map((p,i) => `<button class="match-btn" id="ml${i}" onclick="msClickL(${i})">${p.left}</button>`).join('')}
     </div>
     <div class="match-col">
       <div class="match-col-label">🔎 Definições</div>
-      ${rights.map((r,i) => `<button class="match-btn" id="mr-${i}" data-val="${encodeURIComponent(r)}" onclick="matchClickRight(this)">${r}</button>`).join('')}
+      ${MS_rights.map((r,i) => `<button class="match-btn" id="mr${i}" onclick="msClickR(${i})">${r}</button>`).join('')}
     </div>
-    <div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
-      <div style="font-size:.82rem;color:var(--text3)" id="matchStatus">0 de ${m.pairs.length} pares associados</div>
-      <button class="btn btn-solid" id="matchConfirmBtn" onclick="confirmMatch()" disabled
-        style="opacity:.4;cursor:not-allowed">✅ Confirmar Respostas</button>
-    </div>
-  `;
+    <div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap">
+      <div style="font-size:.82rem;color:var(--text3)" id="msStatus">0 de ${m.pairs.length} pares associados</div>
+      <button class="btn btn-solid" id="msConfirm" onclick="msConfirm()" disabled style="opacity:.4;cursor:not-allowed">✅ Confirmar Respostas</button>
+    </div>`;
 }
 
-function matchClickLeft(btn, idx) {
+function msRender() {
+  // Re-render all button states based on MS.pairs and MS.sel
+  const m = MISSIONS[mIdx];
+  // Build reverse map: rightIdx -> leftIdx
+  const rev = {};
+  Object.entries(MS.pairs).forEach(([li, ri]) => rev[ri] = parseInt(li));
+
+  m.pairs.forEach((p, li) => {
+    const lb = document.getElementById('ml' + li);
+    if (!lb) return;
+    const pairedRi = MS.pairs[li];
+    const isSelected = MS.sel === li;
+    lb.className = 'match-btn' + (isSelected ? ' selected' : pairedRi !== undefined ? ' paired' : '');
+    lb.style.cssText = '';
+    if (isSelected) { lb.style.borderColor='var(--yellow)'; lb.style.background='rgba(255,230,0,0.08)'; lb.style.color='var(--yellow)'; }
+    else if (pairedRi !== undefined) { lb.style.borderColor='var(--cyan)'; lb.style.background='rgba(0,245,255,0.07)'; lb.style.color='var(--cyan)'; }
+    lb.textContent = p.left + (pairedRi !== undefined ? ' →' : '');
+  });
+
+  MS_rights.forEach((r, ri) => {
+    const rb = document.getElementById('mr' + ri);
+    if (!rb) return;
+    const pairedLi = rev[ri];
+    rb.className = 'match-btn' + (pairedLi !== undefined ? ' paired' : '');
+    rb.style.cssText = '';
+    if (pairedLi !== undefined) { rb.style.borderColor='var(--cyan)'; rb.style.background='rgba(0,245,255,0.07)'; rb.style.color='var(--cyan)'; }
+    rb.textContent = r;
+  });
+
+  const done = Object.keys(MS.pairs).length;
+  const total = m.pairs.length;
+  const st = document.getElementById('msStatus');
+  if (st) st.textContent = done + ' de ' + total + ' pares associados';
+  const cb = document.getElementById('msConfirm');
+  if (cb) {
+    const ready = done === total;
+    cb.disabled = !ready;
+    cb.style.opacity = ready ? '1' : '.4';
+    cb.style.cursor = ready ? 'pointer' : 'not-allowed';
+  }
+}
+
+function msClickL(li) {
   if (answered) return;
-  // Deselect previous left
-  document.querySelectorAll('.match-btn[data-idx]').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  matchState.selectedLeft = idx;
+  // If clicking already selected, deselect
+  if (MS.sel === li) { MS.sel = null; msRender(); return; }
+  MS.sel = li;
   sfx.open();
+  msRender();
 }
 
-function matchClickRight(btn) {
+function msClickR(ri) {
   if (answered) return;
-  if (matchState.selectedLeft === null) {
-    // Warn user to pick left first
-    btn.style.borderColor = 'var(--yellow)';
-    setTimeout(() => btn.style.borderColor = '', 600);
+  if (MS.sel === null) {
+    // Flash yellow to hint: pick left first
+    const rb = document.getElementById('mr' + ri);
+    if (rb) { rb.style.borderColor='var(--yellow)'; setTimeout(()=>{ if(rb) rb.style.borderColor=''; msRender(); },500); }
     return;
   }
-
-  const leftIdx = matchState.selectedLeft;
-  const rightVal = decodeURIComponent(btn.dataset.val);
-
-  // If this right was already used, un-assign it first
-  const prevLeft = Object.keys(matchState.pairs).find(k => matchState.pairs[k] === rightVal);
-  if (prevLeft !== undefined) {
-    delete matchState.pairs[prevLeft];
-    const prevLeftBtn = document.getElementById('ml-' + prevLeft);
-    if (prevLeftBtn) { prevLeftBtn.style.background=''; prevLeftBtn.style.borderColor=''; prevLeftBtn.style.color=''; prevLeftBtn.textContent = MISSIONS[mIdx].pairs[prevLeft].left; }
-  }
-
-  // If this left already had a right, free that right button
-  if (matchState.pairs[leftIdx] !== undefined) {
-    const oldRightVal = matchState.pairs[leftIdx];
-    document.querySelectorAll('.match-btn[data-val]').forEach(b => {
-      if (decodeURIComponent(b.dataset.val) === oldRightVal) { b.style.background=''; b.style.borderColor=''; b.style.color=''; }
-    });
-  }
-
+  const li = MS.sel;
+  // Remove any existing pair for this right slot
+  Object.keys(MS.pairs).forEach(k => { if (MS.pairs[k] === ri) delete MS.pairs[k]; });
   // Assign
-  matchState.pairs[leftIdx] = rightVal;
-
-  // Visual feedback — mark as paired (neutral, not correct/wrong yet)
-  const leftBtn = document.getElementById('ml-' + leftIdx);
-  leftBtn.style.borderColor = 'var(--cyan)';
-  leftBtn.style.background = 'rgba(0,245,255,0.08)';
-  leftBtn.style.color = 'var(--cyan)';
-  leftBtn.textContent = MISSIONS[mIdx].pairs[leftIdx].left + ' →';
-
-  btn.style.borderColor = 'var(--cyan)';
-  btn.style.background = 'rgba(0,245,255,0.08)';
-  btn.style.color = 'var(--cyan)';
-
-  // Deselect left
-  document.querySelectorAll('.match-btn[data-idx]').forEach(b => b.classList.remove('selected'));
-  matchState.selectedLeft = null;
-
-  // Update status
-  const done = Object.keys(matchState.pairs).length;
-  const total = MISSIONS[mIdx].pairs.length;
-  document.getElementById('matchStatus').textContent = done + ' de ' + total + ' pares associados';
-
-  // Enable confirm when all paired
-  const confirmBtn = document.getElementById('matchConfirmBtn');
-  if (done === total) {
-    confirmBtn.disabled = false;
-    confirmBtn.style.opacity = '1';
-    confirmBtn.style.cursor = 'pointer';
-    confirmBtn.textContent = '✅ Confirmar Respostas (' + total + '/' + total + ')';
-  }
+  MS.pairs[li] = ri;
+  MS.sel = null;
+  sfx.open();
+  msRender();
 }
 
-function confirmMatch() {
+function msConfirm() {
   if (answered) return;
   answered = true;
   clearInterval(timerInt);
   const m = MISSIONS[mIdx];
   let correctCount = 0;
 
-  // Reveal results
-  m.pairs.forEach((p, i) => {
-    const leftBtn = document.getElementById('ml-' + i);
-    const userAnswer = matchState.pairs[i];
-    const isOk = userAnswer === p.right;
-    if (isOk) correctCount++;
-
-    // Find the right button with this value
-    document.querySelectorAll('.match-btn[data-val]').forEach(b => {
-      if (decodeURIComponent(b.dataset.val) === p.right) {
-        b.style.borderColor = isOk ? 'var(--green)' : 'var(--red)';
-        b.style.background  = isOk ? 'rgba(57,255,20,0.1)' : 'rgba(255,45,85,0.1)';
-        b.style.color       = isOk ? 'var(--green)' : 'var(--red)';
+  m.pairs.forEach((p, li) => {
+    const lb = document.getElementById('ml' + li);
+    const ri = MS.pairs[li];
+    const userVal = MS_rights[ri];
+    const ok = userVal === p.right;
+    if (ok) correctCount++;
+    // Color left
+    if (lb) {
+      lb.style.borderColor = ok ? 'var(--green)' : 'var(--red)';
+      lb.style.background  = ok ? 'rgba(57,255,20,0.1)' : 'rgba(255,45,85,0.1)';
+      lb.style.color       = ok ? 'var(--green)' : 'var(--red)';
+      lb.textContent = p.left + (ok ? ' ✓' : ' ✗');
+      if (ok) spawnSparks(lb);
+    }
+    // Color right
+    if (ri !== undefined) {
+      const rb = document.getElementById('mr' + ri);
+      if (rb) {
+        rb.style.borderColor = ok ? 'var(--green)' : 'var(--red)';
+        rb.style.background  = ok ? 'rgba(57,255,20,0.1)' : 'rgba(255,45,85,0.1)';
+        rb.style.color       = ok ? 'var(--green)' : 'var(--red)';
       }
-    });
-    if (leftBtn) {
-      leftBtn.style.borderColor = isOk ? 'var(--green)' : 'var(--red)';
-      leftBtn.style.background  = isOk ? 'rgba(57,255,20,0.1)' : 'rgba(255,45,85,0.1)';
-      leftBtn.style.color       = isOk ? 'var(--green)' : 'var(--red)';
-      leftBtn.textContent = p.left + (isOk ? ' ✓' : ' ✗');
-      if (isOk) spawnSparks(leftBtn);
+    }
+    // Show correct answer if wrong
+    if (!ok && lb) {
+      const correctRi = MS_rights.indexOf(p.right);
+      const correctRb = document.getElementById('mr' + correctRi);
+      if (correctRb) { correctRb.style.borderColor='var(--green)'; correctRb.style.background='rgba(57,255,20,0.1)'; correctRb.style.color='var(--green)'; correctRb.textContent = p.right + ' ← certo'; }
     }
   });
 
-  // Disable confirm btn
-  const confirmBtn = document.getElementById('matchConfirmBtn');
-  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '✅ Confirmado'; }
+  const cb = document.getElementById('msConfirm');
+  if (cb) { cb.disabled = true; cb.textContent = '✅ Confirmado'; cb.style.opacity='.6'; }
 
   const total = m.pairs.length;
   const pct = correctCount / total;
@@ -1285,7 +1289,7 @@ function confirmMatch() {
   fb.className = 'feedback-row ' + (pct === 1 ? 'fb-correct' : pct >= 0.5 ? 'fb-partial' : 'fb-wrong');
   fb.innerHTML = pct === 1
     ? `🔥 Perfeito! Todos os ${total} pares corretos! +${earned} pts`
-    : `${correctCount}/${total} pares corretos. +${earned} pts — veja as correções acima`;
+    : `${correctCount}/${total} pares corretos. +${earned} pts`;
 
   gameLog.push({ mIdx, correct: pct >= 0.5, pts: earned, time: m.time - timeLeft });
   saveProgress();
